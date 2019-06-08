@@ -1,0 +1,10 @@
+June. 7 2019
+// /* Note the mandrel should be under load to prevent loud oscilations */
+// /* slowest - works all the way through max val of delayMicroseconds */
+// /*            slowest is really more like delay(10) */
+// /* There should be checks in the code to make sure mandrel / carriage velocity is never faster than certain speed bc bad stuff happens (motor stalls) */
+// /* fastest mandrel speed is delayMicroseconds(500); */
+
+// /* Cariage works well around 1 milisecond delay */
+
+June. 8 2019
