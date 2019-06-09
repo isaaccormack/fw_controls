@@ -10,13 +10,7 @@ public:
   typedef unsigned long int long_int_type;
 
   /* Dummy default constructor - all values are overwritten by derived class */
-  Motor() : step_pin_(0), dir_pin_(0), pulley_pitch_(0), num_pulley_teeth_(0) {}
-
-  void set_step_freq_from_ang_vel(const int_type &ang_vel)
-  {
-    step_freq_ = ang_vel * config::steps_per_rev /
-                 (pulley_pitch_ * num_pulley_teeth_);
-  }
+  Motor() : step_pin_(0), dir_pin_(0) {}
 
   /* For testing, should be private */
   void set_step_freq(long_int_type step_freq) { step_freq_ = step_freq; }
@@ -34,12 +28,8 @@ public:
 protected:
   /* Constructor invoked by derived class during its construction */
   Motor(const int_type &step_pin,
-        const int_type &dir_pin,
-        const float &pulley_pitch,
-        const int_type &num_pulley_teeth) : step_pin_(step_pin),
-                                            dir_pin_(dir_pin),
-                                            pulley_pitch_(pulley_pitch),
-                                            num_pulley_teeth_(num_pulley_teeth)
+        const int_type &dir_pin) : step_pin_(step_pin),
+                                   dir_pin_(dir_pin)
   {
     pinMode(step_pin, OUTPUT);
     pinMode(dir_pin, OUTPUT);
@@ -49,9 +39,6 @@ private:
   /* Motor specifiic variables which are defined during construction */
   const int_type step_pin_;
   const int_type dir_pin_;
-
-  const float pulley_pitch_;
-  const int_type num_pulley_teeth_;
 
   /* Default values for all motors */
   int_type step_ind_ = LOW;
