@@ -3,24 +3,22 @@
 
 #include "Config.h"
 
-/* HIGH = 1
- * LOW = 0 */
-/* Make each instantiation of switch serve a different purpose but
- * have there only exist one switch class (ie. Switch mandrel_home;) */
-
-/* Switch must be wired normally open */
 class Switch
 {
 public:
   typedef unsigned int int_type;
   typedef unsigned long int long_int_type;
 
-  Switch(int_type pin) : pin_(pin) { pinMode(pin_, INPUT); }
+  Switch(int_type pin, long_int_type debounce_time = config::debounce_time) : pin_(pin),
+                                                                              debounce_time_(debounce_time)
+  {
+    pinMode(pin_, INPUT);
+  }
 
-  /* Method assumes the button has been pulled down */
+  /* Method assumes the button is wired normally open */
   bool is_rising_edge()
   {
-    /* Debounce by polling every debounce_time_ (ie. 50ms) */
+    /* Debounce by polling at least every debounce_time_ (ie. 50ms) */
     if ((millis() - lastMillis_) > debounce_time_)
     {
       lastMillis_ = millis();
@@ -42,8 +40,8 @@ public:
   }
 
 private:
-  const int_type pin_; // must initialize pin
-  const long_int_type debounce_time_ = config::debounce_time;
+  const int_type pin_;
+  const long_int_type debounce_time_;
 
   long_int_type lastMillis_ = 0;
   int_type last_val_ = LOW;

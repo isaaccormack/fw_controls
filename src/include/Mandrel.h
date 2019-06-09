@@ -3,7 +3,7 @@
 
 #include "Config.h"
 
-class Mandrel
+class Mandrel : public Motor
 {
 public:
   typedef unsigned int int_type;

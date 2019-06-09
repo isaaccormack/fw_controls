@@ -1,34 +1,47 @@
+#include "include/Carriage.h"
 #include "include/Mandrel.h"
+#include "include/Switch.h"
 
 /* Black Green Blue Red */
 /* 1ms works well for fast setting */
 
 int main_()
 {
-  Mandrel b;
-  Switch s;
-  // b.set_step_freq_from_ang_vel(10);
-  b.set_step_freq(300);
+  // Mandrel Mandrel;
+  // Mandrel.set_step_freq(800);
+
+  Carriage Carriage;
+  Carriage.set_step_freq(100);
+
+  // Switch C_home_switch(config::c_home_switch_pin);
+  // Switch C_end_switch(config::c_end_switch_pin);
+
+  // Carriage.home();
+
   while (1)
   {
-    unsigned long i = micros();
-    if ((i - b.get_last_step_time()) > b.get_step_freq())
+    if ((millis() - Carriage.get_last_step_time()) > Carriage.get_step_freq())
     {
-      b.step();
-      b.set_last_step_time(i);
-      Serial.print(i);
-      Serial.print("\n");
+      Carriage.step();
+      Carriage.set_last_step_time(millis());
     }
-    if (s.is_pressed_debounced())
-    {
-      b.flip_dir();
-    }
+    // if ((micros() - Mandrel.get_last_step_time()) > Mandrel.get_step_freq())
+    // {
+    //   Mandrel.step();
+    //   Mandrel.set_last_step_time(micros());
+    //   // Serial.print(i);
+    //   // Serial.print("\n");
+    // }
+    // if (c_home_switch.is_rising_edge())
+    // {
+    //   Mandrel.flip_dir();
+    // }
   }
   return 0;
 }
 
 void setup()
 {
-  Serial.begin(115200);
+  // Serial.begin(115200);
   main_();
 }
