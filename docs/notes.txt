@@ -8,4 +8,8 @@ June. 7 2019
 // /* Cariage works well around 1 milisecond delay */
 // Motors are wired in: A+ = red, A- = blue, B+ = green, B- = black
 
-June. 8 2019
+June. 9 2019
+
+- Somthing is going wrong when direction of carriage is changed as in mandrel speed changes
+during a direction change (which is shouldnt) and motors sound awful
+- Also changing the initial direction in the base class motor doesnt do anything

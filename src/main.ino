@@ -15,7 +15,7 @@ int main_()
   // Mandrel.set_step_freq(1000); // for test
   Mandrel.set_velocity(mandrel_velocity);
 
-  // Switch C_home_switch(config::c_home_switch_pin);
+  Switch C_home_switch(config::c_home_switch_pin);
   // Switch C_end_switch(config::c_end_switch_pin);
 
   // Carriage.home();
@@ -27,11 +27,16 @@ int main_()
   {
     for (Motor *m : Motors)
     {
-      if ((millis() - m->get_last_step_time()) > m->get_step_freq())
+      if ((millis() - m->get_last_step_time()) > m->get_msec_per_step())
       {
         m->step();
         m->set_last_step_time(millis());
       }
+    }
+    if (C_home_switch.is_rising_edge())
+    {
+      Carriage.flip_dir();
+      Serial.print("In func\n");
     }
   }
   return 0;

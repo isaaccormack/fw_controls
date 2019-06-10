@@ -12,10 +12,11 @@ public:
 
   void set_velocity(const float &tan_velocity)
   {
-    /* f = (Vc * steps per rev) / c where c = 2*pi*r */
-    int_type step_freq = (tan_velocity * config::steps_per_rev) /
-                         (6.2831853 * config::mandrel_radius);
-    set_step_freq(step_freq);
+    // have checks for tan_velocity == 0?
+    /* ms/step = 1000 * 2 * pi * Mr / (Vm,tan * steps per rev) */
+    long_int_type msec_per_step = (1000 * 6.2831853 * config::mandrel_radius) /
+                                  (tan_velocity * config::steps_per_rev);
+    set_msec_per_step(msec_per_step);
   }
 };
 

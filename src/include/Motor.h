@@ -13,15 +13,18 @@ public:
   Motor() : step_pin_(0), dir_pin_(0) {}
 
   /* For testing, should be private */
-  void set_step_freq(long_int_type step_freq) { step_freq_ = step_freq; }
+  void set_msec_per_step(const long_int_type &msec_per_step) { msec_per_step_ = msec_per_step; }
 
-  long_int_type get_step_freq() const { return step_freq_; }
+  long_int_type get_msec_per_step() const { return msec_per_step_; }
 
   void flip_dir() { digitalWrite(dir_pin_, dir_ = !dir_); }
 
+  // for testing
+  int_type get_dir() const { return dir_; }
+
   void step() { digitalWrite(step_pin_, step_ind_ = !step_ind_); }
 
-  void set_last_step_time(const unsigned long &last_step_time) { last_step_time_ = last_step_time; }
+  void set_last_step_time(const long_int_type &last_step_time) { last_step_time_ = last_step_time; }
 
   long_int_type get_last_step_time() const { return last_step_time_; }
 
@@ -42,8 +45,8 @@ private:
 
   /* Default values for all motors */
   int_type step_ind_ = LOW;
-  int_type dir_ = LOW;
-  long_int_type step_freq_ = 0;
+  int_type dir_ = HIGH;
+  long_int_type msec_per_step_ = 0;
   long_int_type last_step_time_ = 0;
 };
 
