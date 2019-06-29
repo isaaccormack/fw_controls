@@ -52,8 +52,8 @@ int test_mandrel_velocity_()
   unsigned long int test_time = 10; // s
   /* END TEST PARAMETERS */
 
-  /* tan vel = w * r = ang_vel * mandrel_radius */
-  double tan_vel = config::mandrel_radius * ang_vel;
+  /* tan vel = 2 * PI * w * r = 2 * PI * ang_vel * mandrel_radius */
+  double tan_vel = TWO_PI * config::mandrel_radius * ang_vel;
   Mandrel.set_velocity(tan_vel); // in / s
 
   unsigned long int start_time = micros();
