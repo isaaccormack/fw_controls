@@ -10,13 +10,16 @@ public:
   /* Implicitly construct motor with config variables */
   Mandrel() : Motor(config::mandrel_step_pin, config::mandrel_dir_pin) {}
 
-  void set_velocity(const float &tan_velocity)
+  void set_velocity(const double &tan_velocity)
   {
-    // have checks for tan_velocity == 0?
-    /* ms/step = 1000 * 2 * pi * Mr / (Vm,tan * steps per rev) */
-    long_int_type msec_per_step = (1000 * 6.2831853 * config::mandrel_radius) /
-                                  (tan_velocity * config::steps_per_rev);
-    set_msec_per_step(msec_per_step);
+    /* T = r / v * step_per_rev,
+     * => us/step = 1000 * 1000 * Mr / (Vm,tan * mandrel steps per rev) */
+    long_int_type usec_per_step = 1000000;
+    usec_per_step *= (config::mandrel_radius);
+    usec_per_step /= (tan_velocity);
+    usec_per_step /= (config::mandrel_steps_per_rev);
+
+    set_usec_per_step(usec_per_step);
   }
 };
 

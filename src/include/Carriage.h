@@ -10,13 +10,15 @@ public:
   /* Implicitly construct motor with config variables */
   Carriage() : Motor(config::carriage_step_pin, config::carriage_dir_pin) {}
 
-  /* Need to debug this equation as is not giving expected  */
   void set_velocity(const float &velocity)
   {
-    // have checks for velocity == 0?
-    long_int_type msec_per_step = (1000 * config::carriage_pulley_pitch * config::carriage_num_pulley_teeth) /
-                                  (velocity * config::steps_per_rev);
-    set_msec_per_step(msec_per_step);
+    long_int_type usec_per_step = 1000000;
+    usec_per_step *= config::carriage_pulley_pitch;
+    usec_per_step *= config::carriage_num_pulley_teeth;
+    usec_per_step /= velocity;
+    usec_per_step /= config::steps_per_rev;
+
+    set_usec_per_step(usec_per_step);
   }
 
   // ... WIP ..., something like this
