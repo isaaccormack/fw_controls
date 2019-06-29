@@ -1,7 +1,7 @@
 #include "/Users/i/Documents/Arduino/fw_controls/src/include/Carriage.h"
 #include "/Users/i/Documents/Arduino/fw_controls/src/include/Config.h"
 
-/* Test Case: Carriage velocity is accurate
+/* Test Case: Carriage performs correct number of steps given a velocity and length of time
 
   Setup: Ensure that the arduino.json file in the .vscode folder is loading
          this test file by setting: "sketch": "tests/carriage_velocity.ino"
@@ -10,10 +10,11 @@
 
   Background: See Insight
 
-  Insight: The equation used to set velocity for the carriage uses both large and small, integer and
-           floating point values and therefore, the order of the equation is important. This test case
-           also validates that the precision of the time unit used to measure velocity (microseconds)
-           is precise enough to reflect the period at which steps take place at different velocities. 
+Insight: The equation used to set velocity for the carriage uses both large and small, integer and
+         floating point values in multiplication and division and therefore, the order of the equation
+         is important. This test case also validates that the precision of the time unit used to
+         measure velocity (microseconds) is precise enough to reflect the period at which steps take
+         place at different velocities.
 
   Procedure:
     1. Decide on a range of values over which to execute this test case depending on whether executing
@@ -41,7 +42,7 @@ int test_carriage_velocity_()
   /* START TEST PARAMETERS */
   // Expect mandrel to move length = vel * test_time
   // Test 'vel' between 1 -> 6 in/s
-  double vel = 5; // in/s
+  double vel = 4; // in/s
   // Test 'test_time' between 1 -> 10 s
   unsigned long int test_time = 2; // s
   /* END TEST PARAMETERS */
