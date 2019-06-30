@@ -38,6 +38,8 @@
   LAST EXECUTED RESULTS:
     - (June 28, 2019) The mandrel rotated within 1 - 3 steps after 10 rotations with ang_vel at 1 rev /s  when
       carriage_pulley_pitch was set to 0.195
+    - (June 31, 2019) The pattern to update last_step_time was applied resulting in the mandrels velocity being accurate
+      within 1 - 3 steps over the specified tan_vel range between 1 - 10 revolutions.
  */
 
 int test_mandrel_velocity_()
@@ -46,26 +48,37 @@ int test_mandrel_velocity_()
   Mandrel Mandrel;
 
   /* START TEST PARAMETERS */
-  // Test 'ang_vel' between 0.1 -> 1 rev / s
-  double ang_vel = 0.5; // rev/s
-  // Test 'test_time' between 1 and 10s
-  unsigned long int test_time = 10; // s
+  // Using fcn of 120/deg_wrap_angle to define carriage vel, 'tan_vel' is between 2 -> 6 in/s for 15 <= deg_wrap_angle <= 80
+  double tan_vel = 2;
+  // Test 'revolutions' between 1 and 10 revs
+  unsigned long int revolutions = 5;
   /* END TEST PARAMETERS */
 
-  /* tan vel = 2 * PI * w * r = 2 * PI * ang_vel * mandrel_radius */
-  double tan_vel = TWO_PI * config::mandrel_radius * ang_vel;
-  Mandrel.set_velocity(tan_vel); // in / s
+  // The two below variables are helpers in testing s.t. revolutions can be specified by velocity will be tested
+  double ang_vel = tan_vel;
+  ang_vel /= TWO_PI;
+  ang_vel /= config::mandrel_radius;
+
+  // Initialize test time to 1s = 1,000,000us
+  // Test time = 1s * (X rev) / (Y rev/s) = s
+  unsigned long int test_time = 1000000;
+  test_time *= revolutions;
+  test_time /= ang_vel;
+  // Set test_time to time required to do X revolutions
+
+  Mandrel.set_velocity(tan_vel);
 
   unsigned long int start_time = micros();
-  unsigned long int end_time = (test_time * 1000 * 1000) + start_time;
+  unsigned long int end_time = test_time + start_time;
 
   unsigned long int step_count = 0;
   while (micros() < end_time)
   {
-    if ((micros() - Mandrel.get_last_step_time()) > Mandrel.get_usec_per_step())
+    unsigned long int curr_usec = micros();
+    if ((curr_usec - Mandrel.get_last_step_time()) > Mandrel.get_usec_per_step())
     {
+      Mandrel.set_last_step_time(curr_usec);
       Mandrel.step();
-      Mandrel.set_last_step_time(micros());
       ++step_count;
     }
   }
