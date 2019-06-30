@@ -13,3 +13,60 @@ June. 9 2019
 - Somthing is going wrong when direction of carriage is changed as in mandrel speed changes
 during a direction change (which is shouldnt) and motors sound awful
 - Also changing the initial direction in the base class motor doesnt do anything
+
+June, 28 2019
+Mandrel set velocity equation:
+/* T = TWO_PI * r / v * step_per_rev,
+  * => us/step = 1000 * 1000 * TWO_PI * Mr / (Vm,tan * mandrel_steps_per_rev) */
+
+  need to set velocity in the way the equation is layed out bc of calc rounding errors
+
+June 29, 2019
+Processor speed on arduino is not an issue definitively (atleast with two motors and simple control (ie. no acceleration))
+as the CPU is not close to full utilization in polling loop. Tested via counting how many times the motor was stepped vs how
+many times the outer loop of the cycle was executed, results were on the order of 125:1 worst case (ie. motor at fastest speed)
+with one motor in loop. It was found to be more imporant to precisely handle any timing events which are time sensitive s.t. 
+reading and writing to/from micros is vital to the function of the machine. Ie. polling to see if motor should be stepped, then
+stepping it, then saving last step time was found to an yeild innacurate (less than actual) number of steps completed. Exact code
+seen below:
+
+while (micros() < end_time)
+{
+  if (micros() - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
+  {
+    Carriage.step();
+    Carriage.set_last_step_time(micros());
+    ++step_count;
+  }
+  ++counter;
+}
+
+In this method the time aquired when reading from micros is before the time which is written to the last step time (because millis is
+being polled before and after step operation) therefore there is unaccounted for time s.t. the last step time is actually after the time
+at which the motor was last stepped. Thus not enough steps were being completed especially at higher speeds where the step operation is
+done frequently s.t. this effect is amplified. To combat this the below code was imlemented:
+
+while (micros() < end_time)
+{
+  unsigned long int curr_usec = micros();
+  if (curr_usec - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
+  {
+    Carriage.set_last_step_time(curr_usec - LAG_FACTOR);
+    Carriage.step();
+    ++step_count;
+  }
+  ++counter;
+}
+
+In this code the same time at which the motor is checked if it needs to be stepped is written to the last step time, therefore there is no
+unaccounted for time (ie. when the motor is checked and found that it needs to be stepped, that exact time is written as the last step time,
+then a step is completed in the time after s.t. the timing between steps is not effected by the execution (ie. time taken) of the step method).
+Thus the period of steps remains constant and there is no cummulative lagging effect due to uncompensated time. 
+
+Also it should be noted there is a LAG_FACTOR used to set the last step time at a time slightly before the current time to compensate for 
+<computational tasks> which lag the setting of the last step time. The reasoning behind the LAG_FACTOR is not 100% sound right now, but it
+is found experimentally that it is necessary to get the required number of steps with 3 steps of expected when the carriage is moving sufficiently
+fast (ie. > 5 in/s)
+
+const unsigned long int LAG_FACTOR = (unsigned long int)(vel + vel / 2); // where vel is in/s of the carriage
+
