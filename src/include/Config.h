@@ -10,8 +10,9 @@ typedef unsigned long int long_int_type;
 // Precondition: 10 <= deg_wrap_angle <= 80
 const double deg_wrap_angle = 25;                    // degrees
 const double wrap_angle = deg_wrap_angle * PI / 180; // radians
-// Gain of 100 good for testing, more like 120 - 150 for prod
-const double carriage_velocity = 120 / deg_wrap_angle; // in / s -- 1linearize fcn to keep mandrel speed roughly stable
+// Use linearization fcn with gain of 120 to keep mandrel velocity relatively stable over different wrap angles
+// Gain can vary between 100 (at slowest) and 150 according to best behaving mandrel speeds (wrt slip and torque)
+const double carriage_velocity = 120 / deg_wrap_angle; // in / s
 const double mandrel_radius = 2.0;                     // inches
 const int_type debounce_time = 50;                     // ms
 
