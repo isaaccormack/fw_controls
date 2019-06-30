@@ -43,6 +43,10 @@
         and the code in this test takes the mandrel steps per revolution very litteraly as it determines how many steps
         are executed in the test
         Overall, a compromise is made between accurate mandrel velocity and exact control over position
+      - (June 30, 2019) After applying the correction to the way the steps are counted as originated in the carriage 
+        testing, and therefore setting the config::mandrel_steps_per_rev back to the proper value of 850, there is no
+        visible error in the number of rotations of the mandrel over the test range. Also motor is showing no signs of 
+        slipping / stalling while spinning freely or under load.
  */
 
 int test_mandrel_steps_per_revolution_()
@@ -51,14 +55,12 @@ int test_mandrel_steps_per_revolution_()
   Mandrel Mandrel;
 
   /* START TEST PARAMETERS */
-  // Test 'ang_vel' between 0.1 -> 1 rev / s
-  double ang_vel = 0.5; // rev / s
+  // Test 'tan_vel' between 2 -> 6 in/s
+  double tan_vel = 2;
   // Test 'revolutions' between 1 and 10 revs
-  unsigned long int revolutions = 10; // Expect mandrel to rotate 10 times
+  unsigned long int revolutions = 5; // Expect mandrel to rotate 10 times
   /* END TEST PARAMETERS */
 
-  /* tan vel = w * r = ang_vel * mandrel_radius */
-  double tan_vel = config::mandrel_radius * ang_vel; // in / s
   Mandrel.set_velocity(tan_vel);
 
   // steps = (steps / rev) * rev
@@ -66,10 +68,11 @@ int test_mandrel_steps_per_revolution_()
   unsigned long int step_count = 0;
   while (step_count < total_steps)
   {
-    if ((micros() - Mandrel.get_last_step_time()) > Mandrel.get_usec_per_step())
+    unsigned long int curr_usec = micros();
+    if ((curr_usec - Mandrel.get_last_step_time()) > Mandrel.get_usec_per_step())
     {
+      Mandrel.set_last_step_time(curr_usec);
       Mandrel.step();
-      Mandrel.set_last_step_time(micros());
       ++step_count;
     }
   }
