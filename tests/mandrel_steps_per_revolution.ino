@@ -55,7 +55,7 @@ int test_mandrel_steps_per_revolution_()
   Mandrel Mandrel;
 
   /* START TEST PARAMETERS */
-  // Test 'tan_vel' between 2 -> 6 in/s
+  // Using fcn of 120/deg_wrap_angle to define carriage vel, 'tan_vel' is between 2 -> 6 in/s for 15 <= deg_wrap_angle <= 80
   double tan_vel = 2;
   // Test 'revolutions' between 1 and 10 revs
   unsigned long int revolutions = 5; // Expect mandrel to rotate 10 times
