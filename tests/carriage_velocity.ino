@@ -48,6 +48,8 @@ Insight: The equation used to set velocity for the carriage uses both large and 
                       error will accumulate over time leading to unpredicatable / undesireable results. A physical calibrator in this sense
                       would be something such as a limit switch to indicate the machine has reached an end position. This method of using
                       physical feedback rather than keeping internal state should be used as much as possible to limit error.
+    - (June 31, 2019) Change gain on carriage speed calc from 120 to 200 to overall speed up mandrel and the results is that from 30 < theta < 80
+                      the carriage vel is accurate within 1/16"
  */
 
 int test_carriage_velocity_()
@@ -61,9 +63,10 @@ int test_carriage_velocity_()
   //                   For theta = 20deg, vel = 6 in/s
   //                   For theta = 15deg, vel = 8 in/s
   // Thus, optimize between 1.72 -> 6 in/s but test between 1.5 -> 8 in/s
-  double vel = 6; // in/s
+  // double vel = 2; // in/s
+  double vel = 200.0 / 30.0; // in/s
   // Test 'test_time' between 1 -> 10 s
-  double test_time = 1; // s
+  double test_time = 1.5; // s
   /* END TEST PARAMETERS */
 
   Carriage.set_velocity(vel);
