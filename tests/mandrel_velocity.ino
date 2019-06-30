@@ -40,6 +40,7 @@
       carriage_pulley_pitch was set to 0.195
     - (June 31, 2019) The pattern to update last_step_time was applied resulting in the mandrels velocity being accurate
       within 1 - 3 steps over the specified tan_vel range between 1 - 10 revolutions.
+    - (June 31, 2019) Update range of test velocities to 3.5 -> 14, mandrel is accurate between 3.5 and 10
  */
 
 int test_mandrel_velocity_()
@@ -48,10 +49,10 @@ int test_mandrel_velocity_()
   Mandrel Mandrel;
 
   /* START TEST PARAMETERS */
-  // Using fcn of 120/deg_wrap_angle to define carriage vel, 'tan_vel' is between 2 -> 6 in/s for 15 <= deg_wrap_angle <= 80
-  double tan_vel = 2;
+  // Using fcn of 200/deg_wrap_angle to define carriage vel, 'tan_vel' is between 3.5 -> 14 in/s for 15 <= deg_wrap_angle <= 80
+  double tan_vel = 14;
   // Test 'revolutions' between 1 and 10 revs
-  unsigned long int revolutions = 5;
+  unsigned long int revolutions = 1;
   /* END TEST PARAMETERS */
 
   // The two below variables are helpers in testing s.t. revolutions can be specified by velocity will be tested
