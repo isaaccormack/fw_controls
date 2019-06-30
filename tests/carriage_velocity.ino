@@ -35,17 +35,19 @@ Insight: The equation used to set velocity for the carriage uses both large and 
         seen at speeds of 10+ in/s. This is deemed acceptable because the machine will spend most of its operating time at <= 6 in/s.
 
   LAST EXECUTED RESULTS:
+    - (June 28, 2019) The pulley pitch was changed from initially 0.2 in / tooth to 0.195 which yeilds precision
+      of within 1/16" over 10 inches
     - (June 31, 2019) At 2in/s for 5s the carriage moved 10" + 3/32"
                       At 6in/s for 1.66666s the carriage moved 10" +- 1/64"
                       This the machine has been optimized between the values of 2 -> 6 in/s and yeilds a tolerance of [-0", +3/32"] over 10"
                       The tolerance at speeds not listed above can be approximated by interpolation of the values listed above.
                       It has been determined that precision above this would require more advanced / complicated compensation techniques
-                      to account for timing in accuracies when reading / writing from micros in the manner done here, namely some form of 
+                      to account for timing in accuracies when reading / writing from micros in the manner done here, namely some form of
                       lag factor as described in the docs, and development will continue with this range of precision. However, it has been
                       decided that physical calibrators must be in place on the machine during the execution of the control system or this
                       error will accumulate over time leading to unpredicatable / undesireable results. A physical calibrator in this sense
                       would be something such as a limit switch to indicate the machine has reached an end position. This method of using
-                      physical feedback rather than keeping internal state should be used as much as possible to limit error. 
+                      physical feedback rather than keeping internal state should be used as much as possible to limit error.
  */
 
 int test_carriage_velocity_()
@@ -61,7 +63,7 @@ int test_carriage_velocity_()
   // Thus, optimize between 1.72 -> 6 in/s but test between 1.5 -> 8 in/s
   double vel = 6; // in/s
   // Test 'test_time' between 1 -> 10 s
-  double test_time = 1.66666; // s
+  double test_time = 1; // s
   /* END TEST PARAMETERS */
 
   Carriage.set_velocity(vel);
