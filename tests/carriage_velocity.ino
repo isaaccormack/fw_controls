@@ -28,10 +28,24 @@ Insight: The equation used to set velocity for the carriage uses both large and 
        physically is within 1/16 of an inch of the distance in the software, for various speeds and lengths
 
   Expected Results:
-    - The carriage will move X inches +- 1/16in where X = vel (in/s) * test_time (s) for various velocities and time lengths
+    - The carriage will move X inches +- (an exceptable tolerance) where X = vel (in/s) * test_time (s) for various velocities
+      and time lengths
+      - In the past, velocities between 1 -> 8 in/s have been used measuring the machines precision over 1", 5", 10" and 20" sections
+        with an exceptable tolerance of +- 1/16 ON AVERAGE, meaning a 1/64" tolerance is seen at speeds of 2 in/s and a 1/8" tolerance
+        seen at speeds of 10+ in/s. This is deemed acceptable because the machine will spend most of its operating time at <= 6 in/s.
 
   LAST EXECUTED RESULTS:
-    - (June 28, 2019) The carriage moved to within 1/16 of the position for various velocities and time lengths
+    - (June 31, 2019) At 2in/s for 5s the carriage moved 10" + 3/32"
+                      At 6in/s for 1.66666s the carriage moved 10" +- 1/64"
+                      This the machine has been optimized between the values of 2 -> 6 in/s and yeilds a tolerance of [-0", +3/32"] over 10"
+                      The tolerance at speeds not listed above can be approximated by interpolation of the values listed above.
+                      It has been determined that precision above this would require more advanced / complicated compensation techniques
+                      to account for timing in accuracies when reading / writing from micros in the manner done here, namely some form of 
+                      lag factor as described in the docs, and development will continue with this range of precision. However, it has been
+                      decided that physical calibrators must be in place on the machine during the execution of the control system or this
+                      error will accumulate over time leading to unpredicatable / undesireable results. A physical calibrator in this sense
+                      would be something such as a limit switch to indicate the machine has reached an end position. This method of using
+                      physical feedback rather than keeping internal state should be used as much as possible to limit error. 
  */
 
 int test_carriage_velocity_()
@@ -45,26 +59,18 @@ int test_carriage_velocity_()
   //                   For theta = 20deg, vel = 6 in/s
   //                   For theta = 15deg, vel = 8 in/s
   // Thus, optimize between 1.72 -> 6 in/s but test between 1.5 -> 8 in/s
-  double vel = 5; // in/s
+  double vel = 6; // in/s
   // Test 'test_time' between 1 -> 10 s
-  double test_time = 1; // s
+  double test_time = 1.66666; // s
   /* END TEST PARAMETERS */
-
-  // The lag factor is required to compensate for the increased frequency of digital writes at
-  // higher speeds which cummulatively begin to lag the setting the last step time s.t. not enough
-  // steps occur bc last step time is longer than it should be
-  // lag factor associated with cost to read from millis and check condition every loop
-  const unsigned long int LAG_FACTOR = (unsigned long int)(vel + vel / 2);
 
   Carriage.set_velocity(vel);
 
   const unsigned long int start_time = micros();
   const unsigned long int end_time = (test_time * 1000 * 1000) + start_time;
 
-  unsigned long int error_flag = 0;
   unsigned long int step_count = 0;
-  unsigned long int counter = 2;
-  unsigned long int prev_counter = 0;
+  unsigned long int counter = 0;
   while (micros() < end_time)
   {
     // /* Mock Intensive process */
@@ -76,24 +82,13 @@ int test_carriage_velocity_()
     unsigned long int curr_usec = micros();
     if (curr_usec - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
     {
-      Carriage.set_last_step_time(curr_usec - LAG_FACTOR);
+      Carriage.set_last_step_time(curr_usec);
       Carriage.step();
       ++step_count;
-
-      prev_counter = counter;
-      if (prev_counter == (counter - 1))
-      {
-        // then this for loop has been executed twice in a row (which it should never be)
-        error_flag = 1;
-      }
     }
     ++counter;
   }
   // Optional debug output
-  if (error_flag > 0)
-  {
-    Serial.print("motor was stepped twice in a row due to lag factor\n");
-  }
   Serial.print((micros() - start_time) / 1000);
   Serial.print(" <- Total time taken (ms)\n");
   Serial.print(step_count);
