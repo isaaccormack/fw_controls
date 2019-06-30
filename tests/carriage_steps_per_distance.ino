@@ -38,6 +38,11 @@
   LAST EXECUTED RESULTS:
     - (June 28, 2019) The pulley pitch was changed from initially 0.2 in / tooth to 0.195 which yeilds precision
       of within 1/16" over 10 inches
+    - (June 30, 2019) Sanity to double check the new method of stepping motor (as described in July 30 log in docs) 
+      and it was found that carriage is as or more accurate than during last round of testing (no calibrations whether
+      changed). It should be noted that position testing at higher speeds > 6in/s was not accurate due to slip of timing belt
+      on motor shaft but below these speeds machine was within +- 1/16" and there is no known reason why this tolerance 
+      would change as speed increases to ~ 10 in/s 
  */
 
 int test_carriage_steps_per_distance_()
@@ -46,10 +51,10 @@ int test_carriage_steps_per_distance_()
   Carriage Carriage;
 
   /* START TEST PARAMETERS */
-  // Test 'vel' between 1 -> 6 in/s
-  double vel = 1; // in/s
+  // Test 'vel' between 1.5 -> 8 in/s
+  double vel = 10; // in/s
   // Test 'length' between 0.5 -> 10 in
-  unsigned long int length = 10; // in
+  unsigned long int length = 1; // in
   /* END TEST PARAMETERS */
 
   Carriage.set_velocity(vel);
@@ -62,10 +67,11 @@ int test_carriage_steps_per_distance_()
   unsigned long int step_count = 0;
   while (step_count < total_steps)
   {
-    if ((micros() - Carriage.get_last_step_time()) > Carriage.get_usec_per_step())
+    unsigned long int curr_usec = micros();
+    if (curr_usec - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
     {
+      Carriage.set_last_step_time(curr_usec);
       Carriage.step();
-      Carriage.set_last_step_time(micros());
       ++step_count;
     }
   }
