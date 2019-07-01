@@ -6,33 +6,22 @@ int main_()
 {
   Serial.begin(115200);
 
-  // Determine limits / relationships between wrap angles and carriage velocities (implicitly defining mandrel velocities)
-
   Carriage Carriage;
   Carriage.set_velocity(config::carriage_velocity);
 
-  /* From Vm / Vc = tan(wrap_angle)
-   * then Vm,tan = Vc * tan(wrap angle) */
+  /* Vm / Vc = tan(wrap_angle)   =>   Vm,tan = Vc * tan(wrap angle) */
   double mandrel_velocity = config::carriage_velocity * tan(config::wrap_angle);
 
   Mandrel Mandrel;
   Mandrel.set_velocity(mandrel_velocity);
 
-  Switch C_home_switch(config::c_home_switch_pin);
+  Switch C_Home_Switch(config::c_home_switch_pin, Carriage);
+  Switch C_Far_Switch(config::c_far_switch_pin, Carriage);
 
-  // Could declare swtich like:
-  // Switch C_home_switch(config::c_home_switch_pin, &Carriage);
-  // such that the switch holds a reference to motor and can envoke functions on its cbehalf
-
-  // Switch C_end_switch(config::c_end_switch_pin);
+  Motor *Motors[2] = {&Mandrel, &Carriage};
+  Switch *Dir_Switches[2] = {&C_Home_Switch, &C_Far_Switch};
 
   // Carriage.home();
-
-  // Serial.print(Carriage.get_dir());
-  // Serial.print(" <- Carriage Direction\n");
-
-  // Create array of references to class instances
-  Motor *Motors[2] = {&Mandrel, &Carriage};
 
   while (1)
   {
@@ -54,12 +43,14 @@ int main_()
       }
     }
 
-    // Second condition makes it such that the direction cant be flipped when machine is timed out
-    if (C_home_switch.is_rising_edge() && !Carriage.is_dir_flip_flag_set())
+    for (Switch *s : Dir_Switches)
     {
-      Carriage.flip_dir();
-      Carriage.set_dir_flip_flag();
-      Carriage.set_last_dir_flip_time(micros());
+      if (s->is_rising_edge() && !s->motor.is_dir_flip_flag_set())
+      {
+        s->motor.flip_dir();
+        s->motor.set_dir_flip_flag();
+        s->motor.set_last_dir_flip_time(micros());
+      }
     }
   }
   return 0;

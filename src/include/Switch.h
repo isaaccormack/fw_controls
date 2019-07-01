@@ -2,6 +2,7 @@
 #define SWITCH_H
 
 #include "Config.h"
+#include "Motor.h"
 
 class Switch
 {
@@ -9,11 +10,16 @@ public:
   typedef unsigned int int_type;
   typedef unsigned long int long_int_type;
 
-  Switch(int_type pin, long_int_type debounce_time = config::debounce_time) : pin_(pin),
-                                                                              debounce_time_(debounce_time)
+  Switch(const int_type &pin,
+         Motor &m,
+         const long_int_type &debounce_time = config::debounce_time) : pin_(pin),
+                                                                       motor(m),
+                                                                       debounce_time_(debounce_time)
   {
     pinMode(pin_, INPUT);
   }
+
+  Motor &motor; // store reference to motor
 
   /* Method assumes the button is wired normally open */
   bool is_rising_edge()
