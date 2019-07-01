@@ -4,26 +4,32 @@
 
 int main_()
 {
-  Carriage Carriage;
-  // Carriage.set_step_freq(100); // for test
-  Carriage.set_velocity(config::carriage_velocity); // in/s
+  Serial.begin(115200);
 
-  /* Vm,tan = Vc / tan(wrap angle) */
-  float mandrel_velocity = config::carriage_velocity / tan(config::wrap_angle);
+  // Determine limits / relationships between wrap angles and carriage velocities (implicitly defining mandrel velocities)
+
+  Carriage Carriage;
+  Carriage.set_velocity(config::carriage_velocity);
+
+  /* From Vm / Vc = tan(wrap_angle)
+   * then Vm,tan = Vc * tan(wrap angle) */
+  double mandrel_velocity = config::carriage_velocity * tan(config::wrap_angle);
 
   Mandrel Mandrel;
-  // Mandrel.set_step_freq(1000); // for test
   Mandrel.set_velocity(mandrel_velocity);
 
   Switch C_home_switch(config::c_home_switch_pin);
 
   // Could declare swtich like:
   // Switch C_home_switch(config::c_home_switch_pin, &Carriage);
-  // such that the switch holds a reference to motor and can envoke functions on its behalf
+  // such that the switch holds a reference to motor and can envoke functions on its cbehalf
 
   // Switch C_end_switch(config::c_end_switch_pin);
 
   // Carriage.home();
+
+  Serial.print(Carriage.get_dir());
+  Serial.print(" <- Carriage Direction\n");
 
   // Create array of references to class instances
   Motor *Motors[2] = {&Mandrel, &Carriage};
@@ -32,49 +38,44 @@ int main_()
   {
     for (Motor *m : Motors)
     {
-      // // check which state motor is in and handle that accordingly
-      // if (m.get_state() == RAMP_UP) // use enumeration to define state??
-      // {
-      // }
-      // else if (m.get_state() == RAMP_DOWN)
-      // {
-      // }
-      // else // it must be travelling linearly so just step it regularly
-      // {
-      // }
-      /* This might need to account for 2 steps per freq */
-      if ((millis() - m->get_last_step_time()) > m->get_msec_per_step())
+      unsigned long int curr_usec = micros();
+      if ((curr_usec - m->get_last_step_time()) > m->get_usec_per_step())
       {
+        if (m->dir_flip_flag_is_set() && (curr_usec - m->get_dir_flip_time() > m->dir_flip_timeout_length()))
+        {
+          if (curr_usec - m->get_dir_flip_time() < m->dir_flip_timeout_length())
+          {
+            continue;
+          }
+          Carriage.clear_dir_flip_flag();
+        }
+        m->set_last_step_time(curr_usec);
         m->step();
-        m->set_last_step_time(millis());
       }
     }
+
     if (C_home_switch.is_rising_edge())
     {
-      // what you actually want to call is some kind of turn around functions
-      // this can ALL be generic such that when
-
-      // turn around function can just linearly increase the msec per step until it is rougly 0 (ie. msec_per_step += dt)
-      // every <define what time period here this would happen at> then change direction, then ramp back up
-
-      // ie. if delta time (constant) has passed that is required between incrememntally changing msec per step
-      // then change msec per step
-      // if msec per step is ~= 0, flip dir then repeat this process to ramp up
-
-      // *** would need to define states in main such that each motor is checked if it is in such and such state to
-      // then handle whether it should be stepper normally or ramped up / down
-
+      // What I want to do:
+      // Flip the motors direction, then the next time it goes to step (ie. next loop) delay the motor from stepping
+      // for a timeout period
       Carriage.flip_dir();
-      Serial.print("In func\n");
+      Carriage.set_dir_flip_flag();
+      Carriage.set_dir_flip_time(micros());
+      // Serial.print("In func\n");
+      // Serial.print(Carriage.get_dir());
+      // Serial.print(" <- Carriage Direction\n");
     }
-    // for (Switch *s : Switches)
+    // unsigned long int curr_usec = micros();
+    // if (curr_usec - debug_time > 1000000) // if 1s has passed
     // {
-    //   if (s.is_rising_edge())
-    //   {
-    //     // turn_around() handles things such as direction change, ramp down and ramp up speeds and what equation
-    //     // they ramp according to
-    //     s.motor.turn_around(); // call turn around function of motor associated with that limit switch
-    //   }
+    //   debug_time = curr_usec;
+    //   Serial.print(Carriage.get_step_counter());
+    //   Serial.print(" <- num of steps done by carriage over 1s\n");
+    //   Serial.print(Mandrel.get_step_counter());
+    //   Serial.print(" <- num of steps done by mandrel over 1s\n");
+    //   Carriage.clear_step_counter();
+    //   Mandrel.clear_step_counter();
     // }
   }
   return 0;
@@ -82,6 +83,5 @@ int main_()
 
 void setup()
 {
-  // Serial.begin(115200);
   main_();
 }
