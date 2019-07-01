@@ -28,8 +28,8 @@ int main_()
 
   // Carriage.home();
 
-  Serial.print(Carriage.get_dir());
-  Serial.print(" <- Carriage Direction\n");
+  // Serial.print(Carriage.get_dir());
+  // Serial.print(" <- Carriage Direction\n");
 
   // Create array of references to class instances
   Motor *Motors[2] = {&Mandrel, &Carriage};
@@ -41,9 +41,9 @@ int main_()
       unsigned long int curr_usec = micros();
       if ((curr_usec - m->get_last_step_time()) > m->get_usec_per_step())
       {
-        if (m->dir_flip_flag_is_set() && (curr_usec - m->get_dir_flip_time() > m->dir_flip_timeout_length()))
+        if (m->is_dir_flip_flag_set())
         {
-          if (curr_usec - m->get_dir_flip_time() < m->dir_flip_timeout_length())
+          if (curr_usec - m->get_last_dir_flip_time() < config::dir_flip_timeout_dur)
           {
             continue;
           }
@@ -54,29 +54,13 @@ int main_()
       }
     }
 
-    if (C_home_switch.is_rising_edge())
+    // Second condition makes it such that the direction cant be flipped when machine is timed out
+    if (C_home_switch.is_rising_edge() && !Carriage.is_dir_flip_flag_set())
     {
-      // What I want to do:
-      // Flip the motors direction, then the next time it goes to step (ie. next loop) delay the motor from stepping
-      // for a timeout period
       Carriage.flip_dir();
       Carriage.set_dir_flip_flag();
-      Carriage.set_dir_flip_time(micros());
-      // Serial.print("In func\n");
-      // Serial.print(Carriage.get_dir());
-      // Serial.print(" <- Carriage Direction\n");
+      Carriage.set_last_dir_flip_time(micros());
     }
-    // unsigned long int curr_usec = micros();
-    // if (curr_usec - debug_time > 1000000) // if 1s has passed
-    // {
-    //   debug_time = curr_usec;
-    //   Serial.print(Carriage.get_step_counter());
-    //   Serial.print(" <- num of steps done by carriage over 1s\n");
-    //   Serial.print(Mandrel.get_step_counter());
-    //   Serial.print(" <- num of steps done by mandrel over 1s\n");
-    //   Carriage.clear_step_counter();
-    //   Mandrel.clear_step_counter();
-    // }
   }
   return 0;
 }
