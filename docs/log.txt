@@ -1,0 +1,93 @@
+June. 7 2019
+// /* Note the mandrel should be under load to prevent loud oscilations */
+// /* slowest - works all the way through max val of delayMicroseconds */
+// /*            slowest is really more like delay(10) */
+// /* There should be checks in the code to make sure mandrel / carriage velocity is never faster than certain speed bc bad stuff happens (motor stalls) */
+// /* fastest mandrel speed is delayMicroseconds(500); */
+
+// /* Cariage works well around 1 milisecond delay */
+// Motors are wired in: A+ = red, A- = blue, B+ = green, B- = black
+
+June. 9 2019
+
+- Somthing is going wrong when direction of carriage is changed as in mandrel speed changes
+during a direction change (which is shouldnt) and motors sound awful
+- Also changing the initial direction in the base class motor doesnt do anything
+
+June 28 2019,
+the pulley pitch was change from 0.2 -> 0.195 in / tooth to yeild more precise position control of carriage, it was determined via
+testing that this change makes the machine much more accurate and is physically plausible because the pitch is 5mm (since 5GT timing belt
+pulley) and it is very reasonable that the pitch is actually 0.195in due to machine tolerace, belt stretch, etc.
+
+June, 28 2019
+Mandrel set velocity equation:
+/* T = TWO_PI * r / v * step_per_rev,
+  * => us/step = 1000 * 1000 * TWO_PI * Mr / (Vm,tan * mandrel_steps_per_rev) */
+
+  need to set velocity in the way the equation is layed out bc of calc rounding errors
+
+June 29, 2019
+Processor speed on arduino is not an issue definitively (atleast with two motors and simple control (ie. no acceleration))
+as the CPU is not close to full utilization in polling loop. Tested via counting how many times the motor was stepped vs how
+many times the outer loop of the cycle was executed, results were on the order of 125:1 worst case (ie. motor at fastest speed)
+with one motor in loop. It was found to be more imporant to precisely handle any timing events which are time sensitive s.t. 
+reading and writing to/from micros is vital to the function of the machine. Ie. polling to see if motor should be stepped, then
+stepping it, then saving last step time was found to an yeild innacurate (less than actual) number of steps completed. Exact code
+seen below:
+
+while (micros() < end_time)
+{
+  if (micros() - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
+  {
+    Carriage.step();
+    Carriage.set_last_step_time(micros());
+    ++step_count;
+  }
+  ++counter;
+}
+
+In this method the time aquired when reading from micros is before the time which is written to the last step time (because millis is
+being polled before and after step operation) therefore there is unaccounted for time s.t. the last step time is actually after the time
+at which the motor was last stepped. Thus not enough steps were being completed especially at higher speeds where the step operation is
+done frequently s.t. this effect is amplified. To combat this the below code was imlemented:
+
+while (micros() < end_time)
+{
+  unsigned long int curr_usec = micros();
+  if (curr_usec - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
+  {
+    Carriage.set_last_step_time(curr_usec - LAG_FACTOR);
+    Carriage.step();
+    ++step_count;
+  }
+  ++counter;
+}
+
+In this code the same time at which the motor is checked if it needs to be stepped is written to the last step time, therefore there is no
+unaccounted for time (ie. when the motor is checked and found that it needs to be stepped, that exact time is written as the last step time,
+then a step is completed in the time after s.t. the timing between steps is not effected by the execution (ie. time taken) of the step method).
+Thus the period of steps remains constant and there is no cummulative lagging effect due to uncompensated time. 
+
+Also it should be noted there is a LAG_FACTOR used to set the last step time at a time slightly before the current time to compensate for 
+<computational tasks> which lag the setting of the last step time. The reasoning behind the LAG_FACTOR is not 100% sound right now, but it
+is found experimentally that it is necessary to get the required number of steps with 3 steps of expected when the carriage is moving sufficiently
+fast (ie. > 5 in/s)
+
+const unsigned long int LAG_FACTOR = (unsigned long int)(vel + vel / 2); // where vel is in/s of the carriage
+
+June 30, 2019
+Use limit switch and single 'bump' on mandrel shaft as a 1 reading / rev rotary encoder. Do this to keep track of how many steps have 
+occured since the beginning of the revolution so the delay between passes is precise and continuously calibrated. This method is robust
+to stacked error over time which would be incurred by a method which assumes that the mandrel takes X time to do a pass based on set 
+mandrel speed, and uses this X time to assume the position of the mandrel when the carriage reaches an end zone. As the velocity of the
+mandrel is not exactly as set, there exists a constant error between assumed and actual position which amplifies over many itteration
+and would never be account for. Thus at least a single point of feedback is necessary.
+
+It should be noted that in the method employed here, the mandrel step counter is refrained from being reset if the carriage is at an 
+end zone to account for the otherwise possible infinte loop where the mandrel step count never gets high enough to break the required
+threshold to start the carriage moving again before resetting.
+
+config::total_passes is the number of passes (a pass is defined as a sweep of the carriage from one end to the other, therefore for the
+carriage to go to one end and return to the initial end is two passes) for carriage to make s.t. the mandrel is completely covered by X
+number of layers of filament. total passes is calculated by dividing the circumference of the mandrel by the amount of length covered by
+the mandrel on each pass.
