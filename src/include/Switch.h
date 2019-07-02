@@ -7,19 +7,15 @@
 class Switch
 {
 public:
-  typedef unsigned int int_type;
-  typedef unsigned long int long_int_type;
+  typedef config::int_type int_type;
+  typedef config::long_int_type long_int_type;
 
   Switch(const int_type &pin,
-         Motor &m,
          const long_int_type &debounce_time = config::debounce_time) : pin_(pin),
-                                                                       motor(m),
                                                                        debounce_time_(debounce_time)
   {
     pinMode(pin_, INPUT);
   }
-
-  Motor &motor; // store reference to motor
 
   /* Method assumes the button is wired normally open */
   bool is_rising_edge()

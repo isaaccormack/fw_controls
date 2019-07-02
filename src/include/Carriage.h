@@ -20,14 +20,6 @@ public:
 
     set_usec_per_step(usec_per_step);
   }
-
-  // ... WIP ..., something like this
-  // /* Linearly increase the speed of a motor */
-  // void ramp_up_velocity(const float &init_vel = 0, const float &final_vel, const long_int_type &time)
-  // {
-  //   float delta_vel = final_vel - init_vel;
-  //   set_velocity(delta_vel * (millis() - start_time) / time);
-  // }
 };
 
 #endif

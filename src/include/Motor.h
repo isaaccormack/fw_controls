@@ -6,8 +6,8 @@
 class Motor
 {
 public:
-  typedef unsigned int int_type;
-  typedef unsigned long int long_int_type;
+  typedef config::int_type int_type;
+  typedef config::long_int_type long_int_type;
 
   /* Dummy default constructor - all values are overwritten by derived class */
   Motor() : step_pin_(0), dir_pin_(0) {}
