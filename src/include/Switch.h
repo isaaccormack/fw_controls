@@ -18,12 +18,12 @@ public:
   }
 
   /* Method assumes the button is wired normally open */
-  bool is_rising_edge()
+  bool is_rising_edge(const long_int_type &curr_usec)
   {
     /* Debounce by polling at least every debounce_time_ (ie. 50ms) */
-    if ((millis() - lastMillis_) > debounce_time_)
+    if ((curr_usec - lastMicros_) > debounce_time_)
     {
-      lastMillis_ = millis();
+      lastMicros_ = curr_usec;
 
       if (digitalRead(pin_) == HIGH)
       {
@@ -45,7 +45,7 @@ private:
   const int_type pin_;
   const long_int_type debounce_time_;
 
-  long_int_type lastMillis_ = 0;
+  long_int_type lastMicros_ = 0;
   int_type last_val_ = LOW;
 };
 
