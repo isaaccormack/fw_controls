@@ -91,3 +91,17 @@ config::total_passes is the number of passes (a pass is defined as a sweep of th
 carriage to go to one end and return to the initial end is two passes) for carriage to make s.t. the mandrel is completely covered by X
 number of layers of filament. total passes is calculated by dividing the circumference of the mandrel by the amount of length covered by
 the mandrel on each pass.
+
+July 8 2019
+Bug: the mandrel encoder limit switch which is used as a reference to keep track of how many steps the mandrel has done
+in the revolution is yeilding wonky values such that every 4 or so times the value will be significantly less than other.
+For example, results from today looked like 856, 855, 856, 855, 828, 856, 855, 855, 856, 825. Note that the average of these
+values is ~850 which is the expected result.
+
+After fastening another limit switch on the other end of the machine, it to yeilded the same results, but not at the same time,
+such that the first limit switch could read 828 and the other could read 855 on the same cycle, but the behaviour generally was 
+consistent between the two. Holding the limit switches stable / fiddling with their wires had no effect on the behavior.
+
+BUG FIX: the bug was found to be caused by the use of the millis method within the switch class such that consistently calling
+the method gives small difference between actual time button had rising edge and time recorded. These inaccuracies accumulate over
+time to cause sporadic behaviour as observed
