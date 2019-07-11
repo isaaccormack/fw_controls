@@ -4,16 +4,42 @@
 
 /* This is a simple sanity test to ensure that the step count of the mandrel is properly found to be 850 +- 1 step.
  * 
- * The debounce time of the switch is known to directly effect the ability of the software to accurately record the
- * number of steps taken by the mandrel. Reasoning being that a long debounce time will cause the reset of the mandrel
- * counter to be delay within observable times, (due to the time taken to debounce the switch, the system is cant be sure
- * whether it really detected a rising edge for ~20'000 us). The current mandrel switch is of good physical qualtiy and 
- * only requires a 1000 us delay because it does not bounce very much. This software debounce can be circumvented if the
- * switch is physically debounced with a capacitor / diode circuit which should be considered in the future, but is currently
- * seen as uneccessary and time consuming.
+ * This tes 
  * 
  * To execute the test simply run the code and open a serial monitor and ensure that the number of mandrel steps being outputed
  * is correct within 1 step. A tolerance of steps, say +- 2 or greater indicates a problem in the system. */
+
+/* Test Case: Step counter for mandrel records 850 +- 1 steps between each mandrel limit switch rising edge (once per revolution)
+
+  Setup: Ensure that the arduino.json file in the .vscode folder is loading
+         this test file by setting: "sketch": "tests/mandrel_steps_to_rotate.ino"
+
+  Units Under Test:
+    Physical Parameters:
+      - Physcial debouncing of Mandrel encoder limit switch
+
+    Software:
+      - Switch.is_rising_edge()
+
+  Background: This test case was historcially used to check if the debounce time of the switch in the software was too long such
+              it would cause value for the number of steps of the mandrel does per revolution to be inaccurate.
+              Now that the switch is physically debounced, this test is used for sanity of the debouncing circuit such that it can
+              be validated the switch does not bounce. Also this does a sanity check of the is_rising_edge() method in the switch class. 
+
+  Insight: Use this test case to see that the number of steps per revolution output on the serial monitor is 850 +- 1
+
+  Procedure:
+    1. Vary the speed and number of revolutions as to test on an appropriate spectrum of values and long enough length of time
+    2. Push test case to controller
+    3. Open serial montior and read values
+
+  Expected Results:
+    - For each revolution the number of steps per revolution output on the serial montitor will be 850 +- 1
+
+    LAST EXECUTED RESULTS:
+      - (July 11, 2019) After adding an RC circuit to debounce the switch the experimental results match expected and
+        fit within the tolerance range (+- 1 step per 850 steps).
+ */
 
 int test_mandrel_steps_to_rotate_()
 {
@@ -24,8 +50,7 @@ int test_mandrel_steps_to_rotate_()
   /* START TEST PARAMETERS */
   // Using fcn of 200/deg_wrap_angle to define carriage vel, 'tan_vel' is between 3.5 -> 14 in/s for 15 <= deg_wrap_angle <= 80
   double tan_vel = 8;
-  // Test 'revolutions' between 1 and 10 revs
-  unsigned long int revolutions = 1;
+  unsigned long int revolutions = 20;
   /* END TEST PARAMETERS */
 
   Mandrel.set_velocity(tan_vel);
