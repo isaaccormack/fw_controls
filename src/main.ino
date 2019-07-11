@@ -26,6 +26,10 @@ int main_()
 
   // Carriage.home();
 
+  Serial.print("\n");
+  Serial.print(config::filament_offset_delay_steps);
+  Serial.print(" <- filament offset delay steps\n");
+
   int_type passes = 0;
   while (passes < config::total_passes)
   {
@@ -46,10 +50,6 @@ int main_()
         {
           continue;
         }
-        // Equations to calculate filament offset delay steps must be wrong or I need a delay factor because
-        // the current delay is negligable
-        Serial.print(micros());
-        Serial.print(" <- END dir flip\n");
         Carriage.clear_dir_flip_flag();
       }
       Carriage.set_last_step_time(curr_usec);
@@ -60,15 +60,14 @@ int main_()
     {
       if (s->is_rising_edge() && !Carriage.is_dir_flip_flag_set())
       {
+        mandrel_step_counter = 0;
         Mandrel.set_step_count_at_dir_flip();
+
         Carriage.flip_dir();
-        Serial.print(micros());
-        Serial.print(" <- START dir flip\n");
         Carriage.set_dir_flip_flag();
         ++passes;
       }
     }
-
     if (M_Encoder_Switch.is_rising_edge())
     {
       // If not in the middle of changing direction
