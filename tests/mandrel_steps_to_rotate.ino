@@ -2,13 +2,6 @@
 #include "/Users/i/Documents/Arduino/fw_controls/src/include/Switch.h"
 #include "/Users/i/Documents/Arduino/fw_controls/src/include/Config.h"
 
-/* This is a simple sanity test to ensure that the step count of the mandrel is properly found to be 850 +- 1 step.
- * 
- * This tes 
- * 
- * To execute the test simply run the code and open a serial monitor and ensure that the number of mandrel steps being outputed
- * is correct within 1 step. A tolerance of steps, say +- 2 or greater indicates a problem in the system. */
-
 /* Test Case: Step counter for mandrel records 850 +- 1 steps between each mandrel limit switch rising edge (once per revolution)
 
   Setup: Ensure that the arduino.json file in the .vscode folder is loading
@@ -34,7 +27,8 @@
     3. Open serial montior and read values
 
   Expected Results:
-    - For each revolution the number of steps per revolution output on the serial montitor will be 850 +- 1
+    - For each revolution the number of steps per revolution output on the serial montitor will be 850 +- 1. A tolerance of greater
+    then +- 1 step should be seen as symptomatic of an issue within the system as there is no reason this should be acceptable. 
 
     LAST EXECUTED RESULTS:
       - (July 11, 2019) After adding an RC circuit to debounce the switch the experimental results match expected and
