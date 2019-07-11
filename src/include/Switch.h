@@ -4,48 +4,34 @@
 #include "Config.h"
 #include "Motor.h"
 
+/* Precondition: Switch is wired normally open
+ * 
+ * Switches are physically debounced with a simple RC circuit. The schematic for this circuit can be seen in
+ * /docs/debounced_pulldown_switch_schematic.png. The values in the diagram are configured for a breadboard layout */
 class Switch
 {
 public:
   typedef config::int_type int_type;
-  typedef config::long_int_type long_int_type;
 
-  Switch(const int_type &pin,
-         const long_int_type &debounce_time = config::debounce_time) : pin_(pin),
-                                                                       debounce_time_(debounce_time)
+  Switch(const int_type &pin) : pin_(pin)
   {
     pinMode(pin_, INPUT);
   }
 
-  /* Method assumes the button is wired normally open */
-  bool is_rising_edge(const long_int_type &curr_usec)
+  bool is_rising_edge()
   {
-    /* Debounce by polling at least every debounce_time_ (ie. 50ms) */
-    if ((curr_usec - lastMicros_) > debounce_time_)
+    int_type this_val = digitalRead(pin_);
+    if (this_val == HIGH && last_val_ == LOW)
     {
-      lastMicros_ = curr_usec;
-
-      if (digitalRead(pin_) == HIGH)
-      {
-        if (last_val_ == LOW)
-        {
-          last_val_ = HIGH;
-          return true;
-        }
-      }
-      else
-      {
-        last_val_ = LOW;
-      }
+      last_val_ = this_val;
+      return true;
     }
+    last_val_ = this_val;
     return false;
   }
 
 private:
   const int_type pin_;
-  const long_int_type debounce_time_;
-
-  long_int_type lastMicros_ = 0;
   int_type last_val_ = LOW;
 };
 
