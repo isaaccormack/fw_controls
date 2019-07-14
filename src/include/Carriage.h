@@ -20,6 +20,12 @@ public:
 
     set_usec_per_step(usec_per_step);
   }
+
+  void set_far_end_delay_steps(const int_type &far_end_delay_steps) { far_end_delay_steps_ = far_end_delay_steps; }
+  int_type get_far_end_delay_steps() { return far_end_delay_steps_; }
+
+private:
+  int_type far_end_delay_steps_ = 150;
 };
 
 #endif
