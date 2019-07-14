@@ -19,10 +19,13 @@ int main_()
   Switch *Carriage_Switches[2] = {&C_Home_Switch, &C_Far_Switch};
 
   /*---------------------------------------------------------------------------
-                        Home Carriage and Mandrel
+                          <Home Carriage and Mandrel>
 
   Precondition: Carriage direction is initialized such that carriage moves
                 toward C_Home_Switch.
+  
+  Initialization sub-routine to bring carriage to home position resting against 
+  C_Home_Switch and mandrel to step_count_wind_start position.
   ---------------------------------------------------------------------------*/
 
   Carriage.set_velocity(config::carriage_home_velocity);
@@ -63,11 +66,13 @@ int main_()
   }
 
   /*---------------------------------------------------------------------------
-                        Minimize wait time on ends
+                        <Minimize wait time on ends>
 
-  Perform basic calibration to ensure that <yada yada yada>
+  Calibration sub-routine to find minimal possible required wait time at far end
+  such that each end has a wait time greater than the minimal possible wait time
+  (which Mandrel.get_far_end_wait_steps() is set to by default) given that this
+  time will vary for different wrap_angles, wrap_lengths, and mandrel_radiuses.
   ---------------------------------------------------------------------------*/
-  // Calibration sub-routine to find minimal possible required wait time at far end given wrap_angle and wrap_length
 
   // Note that using a backup step counter for mandrel is only required if is is possible the mandrel encoder
   // switch will not be hit during a pass due to sufficiently small wrap_length and/or wrap angle. That is, if the
@@ -132,9 +137,8 @@ int main_()
     {
       // If not in the middle of changing direction
       if (!Carriage.is_dir_flip_flag_set())
-      {
         Mandrel.clear_step_count();
-      }
+
       Mandrel.clear_backup_step_counter();
     }
   }
@@ -147,30 +151,18 @@ int main_()
   Serial.print(Mandrel.get_far_end_wait_steps());
   Serial.print(" <- initial far end wait steps\n");
 
-  /* Calculate required offset (if any) to far_end_wait_steps() as to make the wait time on the home
-   * side greater than minimum amount (which Mandrel.get_far_end_wait_steps() is set to by default). */
-  if (Mandrel.get_step_count_at_wind_start() >= Mandrel.get_step_count())
+  /* Move these general explanations to docs */
+  /* Given mandrel step_count_at_wind_start is 425, we want to ensure that mandrel step count when arriving at 
+   * home is not in the range [425 - minimum_wait_steps, 425 + 50]. The bottom limit is so we can ensure the
+   * mandrel wait at least the minimum time at the home end during turnaround, and the top limit for safety such
+   * that if the mandrel step count when the carriage arrives at home is barely more than 425, say 426, then if on
+   * the next pass the mandrel step count is 424 (by generally tolerance error) this does not interfere with the wait
+   * time (ie. the mandrel step count would have to decrease by 50 the next time for this to occur which
+   * is inconcievable). */
+  if (Mandrel.get_step_count() < (Mandrel.get_step_count_at_wind_start() + 50) &&
+      Mandrel.get_step_count() > (Mandrel.get_step_count_at_wind_start() - Mandrel.get_far_end_wait_steps()))
   {
-
-    int_type mandrel_offset_steps = Mandrel.get_step_count_at_wind_start() - Mandrel.get_step_count();
-    // If the steps waited on the home side is less than minimal acceptable wait steps
-    if (mandrel_offset_steps < Mandrel.get_far_end_wait_steps())
-    {
-      // Add to far end wait steps s.t. when mandrel reaches home it will wait for a time longer then minimum acceptable wait steps
-      Mandrel.add_to_far_end_wait_steps(1.2 * mandrel_offset_steps);
-    }
-  }
-  else
-  {
-    // Guaranteed 0 <= mandrel_step_count <= ~860 (realistically 853 given machine is well toleranced)
-    // Add 870 for safety to compensate for possibility that Mandrel.get_step_count() > 850, say 852
-    int_type compensated_mandrel_offset_steps = (Mandrel.get_step_count_at_wind_start() + 870) - Mandrel.get_step_count();
-    if (compensated_mandrel_offset_steps < (Mandrel.get_far_end_wait_steps() + 870))
-    {
-      {
-        Mandrel.add_to_far_end_wait_steps(1.2 * (compensated_mandrel_offset_steps - (Mandrel.get_far_end_wait_steps() + 20)));
-      }
-    }
+    Mandrel.add_to_far_end_wait_steps(Mandrel.get_far_end_wait_steps() + 50);
   }
 
   Serial.print(Mandrel.get_far_end_wait_steps());
@@ -179,6 +171,14 @@ int main_()
   while (1)
   {
   }
+
+  /*---------------------------------------------------------------------------
+                               <Wind Filament>
+
+
+  ---------------------------------------------------------------------------*/
+
+  // Need to add backup mandrel step counter in here****
 
   Serial.print("\n");
   Serial.print(config::filament_offset_delay_steps);
