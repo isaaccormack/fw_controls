@@ -13,7 +13,7 @@ class Switch
 public:
   typedef config::int_type int_type;
 
-  Switch(const int_type &pin) : pin_(pin)
+  Switch(const int_type &pin, const int_type &last_val = LOW) : pin_(pin), last_val_(last_val)
   {
     pinMode(pin_, INPUT);
   }
@@ -32,7 +32,7 @@ public:
 
 private:
   const int_type pin_;
-  int_type last_val_ = LOW;
+  int_type last_val_;
 };
 
 #endif
