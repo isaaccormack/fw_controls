@@ -57,7 +57,7 @@ private:
 
   /* Default values for all motors */
   int_type step_ind_ = LOW;
-  int_type dir_ = LOW;
+  int_type dir_ = HIGH;
   int_type dir_flip_flag_ = LOW;
   long_int_type usec_per_step_ = 0;
   long_int_type last_step_time_ = 0;
