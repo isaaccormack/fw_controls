@@ -139,7 +139,7 @@ int main_()
       if (!Carriage.is_dir_flip_flag_set())
         Mandrel.clear_step_count();
 
-      Mandrel.clear_backup_step_counter();
+      Mandrel.clear_backup_step_count();
     }
   }
 
