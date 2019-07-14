@@ -70,6 +70,9 @@ int main_()
   double mandrel_velocity = config::carriage_velocity * tan(config::wrap_angle);
   Mandrel.set_velocity(mandrel_velocity);
 
+  long_int_type mandrel_steps_at_far_side = 0;
+  long_int_type mandrel_steps_on_one_pass = 0;
+  long_int_type mandrel_steps_on_one_pass_counter = 0;
   while (!C_Home_Switch.is_rising_edge())
   {
     long_int_type curr_usec = micros();
@@ -78,6 +81,8 @@ int main_()
       Mandrel.set_last_step_time(curr_usec);
       Mandrel.step();
       Mandrel.inc_step_count();
+      Mandrel.inc_backup_step_count();
+      ++mandrel_steps_on_one_pass_counter;
     }
 
     curr_usec = micros();
@@ -88,6 +93,8 @@ int main_()
         if (Mandrel.get_step_count() - Mandrel.get_step_count_at_dir_flip() >= Mandrel.get_far_end_wait_steps())
         {
           Carriage.clear_dir_flip_flag();
+          // Guarantees that step count after direction change is always reset to a sane value -> [0, 850]
+          Mandrel.restore_step_count_with_backup();
         }
       }
       else
@@ -103,13 +110,47 @@ int main_()
 
       Carriage.flip_dir();
       Carriage.set_dir_flip_flag();
+
+      // Record steps taken over one pass
+      mandrel_steps_on_one_pass = mandrel_steps_on_one_pass_counter;
+      mandrel_steps_at_far_end = mandrel_steps_on_one_pass_counter;
+      mandrel_steps_on_one_pass_counter = 0;
     }
 
     if (M_Encoder_Switch.is_rising_edge())
     {
       // If not in the middle of changing direction
       if (!Carriage.is_dir_flip_flag_set())
+      {
         Mandrel.clear_step_count();
+      }
+      Mandrel.clear_backup_step_counter();
+    }
+  }
+
+  // Take average of mandrel steps on one pass
+  mandrel_steps_on_one_pass += mandrel_steps_on_one_pass_counter;
+  mandrel_steps_on_one_pass /= 2;
+
+  /* The below logic compensates for the possibility that the mandrel step count was never cleared, due to a sufficiently 
+   * small wrap_length and wrap_angle, such that at this point the value of Mandrel.get_step_count() > 850. The compensation
+   * algorithm below this cannot be equipped to deal with this scenario, for reasons described in the docs, instead the 
+   * step_count_at_wind_start for the mandrel is increased (from well defined intial value) to a value that guarantees the
+   * mandrel step count will be able to rollover at a time other than during the far end direction flip delay. */
+
+  // If it is unlikely that the mandrel enocder switch was never pressed because the number of steps taken on
+  // a single pass was too low. Pick 860 arbitrarily for now just to account for fact that mandrel could rotate
+  // ~852 steps > 850.
+  if (mandrel_steps_on_one_pass < 860)
+  {
+    // If the mandrel steps at far end was such that the mandrel step counter didn't clear (ie. step counter became > 850)
+    // because mandrel encoder switch was hit during turn around period
+    int_type mandrel_start_shift_factor = (3 * config::wrap_angle) + 20;
+    if (mandrel_steps_at_far_end > (850 - mandrel_start_shift_factor))
+    {
+      // Add 3*config::wrap_angle + 100 to the mandrels initial step count at wind start such that the mandrels step count
+      // will have rolled over before it reaches far end so mandrel_steps_at_far_end will become < 850 - mandrel_start_shift_factor
+      Mandrel.add_to_step_count_at_wind_start(mandrel_start_shift_factor + 100);
     }
   }
 
@@ -149,11 +190,13 @@ int main_()
     // the below assumes that step count is reset at 850 steps (hence 2000 - 850 = 1150) -> could make this dynamic, or
     // just impose restrictions on conditions that would lead to likely / problematic rollover at home end (ie. assert
     // that wrap_length > 10in and theta > 20deg OR combo assertion, ie. assert wrap_length * theta > 200)
-    int_type compensated_mandrel_offset_steps = (Mandrel.get_step_count_at_wind_start() + 2000) - Mandrel.get_step_count();
-    if (compensated_mandrel_offset_steps < (Mandrel.get_far_end_wait_steps() + 1150))
+
+    // Do above compensation such that at this point we can be guaranteed 0 <= Mandrel.get_step_count() <= 800
+    int_type compensated_mandrel_offset_steps = (Mandrel.get_step_count_at_wind_start() + 20) - Mandrel.get_step_count();
+    if (compensated_mandrel_offset_steps < (Mandrel.get_far_end_wait_steps() + 20))
     {
       {
-        Mandrel.add_to_far_end_wait_steps(1.2 * (compensated_mandrel_offset_steps - (Mandrel.get_far_end_wait_steps() + 1150)));
+        Mandrel.add_to_far_end_wait_steps(1.2 * (compensated_mandrel_offset_steps - (Mandrel.get_far_end_wait_steps() + 20)));
       }
     }
   }
