@@ -109,7 +109,7 @@ int main_()
     curr_usec = micros();
     if (curr_usec - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
     {
-      if (Carriage.is_dir_flip_flag_set())
+      if (Carriage.is_far_dir_flip_flag_set())
       {
         if (Mandrel.get_step_count() - Mandrel.get_step_count_at_dir_flip() >= Mandrel.get_far_end_wait_steps())
         {
@@ -130,13 +130,13 @@ int main_()
       Mandrel.set_step_count_at_dir_flip();
 
       Carriage.flip_dir();
-      Carriage.set_dir_flip_flag();
+      Carriage.set_far_dir_flip_flag();
     }
 
     if (M_Encoder_Switch.is_rising_edge())
     {
       // If not in the middle of changing direction
-      if (!Carriage.is_dir_flip_flag_set())
+      if (!Carriage.is_far_dir_flip_flag_set())
         Mandrel.clear_step_count();
 
       Mandrel.clear_backup_step_count();
@@ -179,12 +179,11 @@ int main_()
   ---------------------------------------------------------------------------*/
 
   // Need to add backup mandrel step counter in here****
+  // Could use a wiki on github to store docs / log information about code
 
   Serial.print("\n");
   Serial.print(config::filament_offset_delay_steps);
   Serial.print(" <- filament_offset_delay_steps\n");
-
-  int_type mandrel_wait_steps = 0;
 
   int_type passes = 0;
   while (passes < config::total_passes)
@@ -195,17 +194,28 @@ int main_()
       Mandrel.set_last_step_time(curr_usec);
       Mandrel.step();
       Mandrel.inc_step_count();
-      ++mandrel_wait_steps;
+      Mandrel.inc_backup_step_count();
     }
 
     curr_usec = micros();
     if (curr_usec - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
     {
-      if (Carriage.is_dir_flip_flag_set())
+      // If we are at far end
+      if (Carriage.is_far_dir_flip_flag_set())
       {
-        if (Mandrel.get_step_count() - Mandrel.get_step_count_at_dir_flip() >= config::filament_offset_delay_steps)
+        if (Mandrel.get_step_count() - Mandrel.get_step_count_at_dir_flip() >= Mandrel.get_far_end_wait_steps())
         {
-          Carriage.clear_dir_flip_flag();
+          Carriage.clear_far_dir_flip_flag();
+          // Guarantees that step count after direction change is always reset to a value between [0, 850]
+          Mandrel.sync_step_count_with_backup();
+        }
+      }
+      // If we are at home end
+      else if (Carriage.is_home_dir_flip_flag_set())
+      {
+        if (Mandrel.get_step_count() == Mandrel.get_step_count_at_wind_start())
+        {
+          Carriage.clear_home_dir_flip_flag();
         }
       }
       else
@@ -215,23 +225,26 @@ int main_()
       }
     }
 
-    for (Switch *s : Carriage_Switches)
+    if (C_Far_Switch.is_rising_edge())
     {
-      if (s->is_rising_edge() && !Carriage.is_dir_flip_flag_set())
-      {
-        mandrel_wait_steps = 0;
-        Mandrel.set_step_count_at_dir_flip();
-
-        Carriage.flip_dir();
-        Carriage.set_dir_flip_flag();
-        ++passes;
-      }
+      Carriage.flip_dir();
+      Carriage.set_far_dir_flip_flag();
     }
+
+    if (C_Home_Switch.is_rising_edge())
+    {
+      Carriage.flip_dir();
+      Carriage.set_home_dir_flip_flag();
+    }
+
     if (M_Encoder_Switch.is_rising_edge())
     {
-      // If not in the middle of changing direction
-      if (!Carriage.is_dir_flip_flag_set())
+      // Reset at far because we are taking a difference to determine end wait criteria
+      // Don't reset at home because using absolute value of mandrel step_count
+      if (!Carriage.is_far_dir_flip_flag_set())
         Mandrel.clear_step_count();
+
+      Mandrel.clear_backup_step_count();
     }
   }
   return 0;

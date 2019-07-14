@@ -24,6 +24,8 @@ public:
   void set_far_end_delay_steps(const int_type &far_end_delay_steps) { far_end_delay_steps_ = far_end_delay_steps; }
   int_type get_far_end_delay_steps() { return far_end_delay_steps_; }
 
+  // Need to add in carriage specific dir flip flag for home and far ends
+
 private:
   int_type far_end_delay_steps_ = 150;
 };
