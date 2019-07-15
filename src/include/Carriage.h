@@ -7,12 +7,11 @@
 class Carriage : public Motor
 {
 public:
-  /* Implicitly construct motor with config variables */
   Carriage() : Motor(config::carriage_step_pin, config::carriage_dir_pin) {}
 
   void set_velocity(const float &velocity)
   {
-    long_int_type usec_per_step = 1000000;
+    long_int_type usec_per_step = 1000000; // Convert s -> us
     usec_per_step *= config::carriage_pulley_pitch;
     usec_per_step *= config::carriage_num_pulley_teeth;
     usec_per_step /= velocity;
@@ -21,13 +20,17 @@ public:
     set_usec_per_step(usec_per_step);
   }
 
-  void set_far_end_delay_steps(const int_type &far_end_delay_steps) { far_end_delay_steps_ = far_end_delay_steps; }
-  int_type get_far_end_delay_steps() { return far_end_delay_steps_; }
+  void set_home_dir_flip_flag() { home_dir_flip_flag_ = HIGH; }
+  void clear_home_dir_flip_flag() { home_dir_flip_flag_ = LOW; }
+  int_type is_home_dir_flip_flag_set() const { return home_dir_flip_flag_; }
 
-  // Need to add in carriage specific dir flip flag for home and far ends
+  void set_far_dir_flip_flag() { far_dir_flip_flag_ = HIGH; }
+  void clear_far_dir_flip_flag() { far_dir_flip_flag_ = LOW; }
+  int_type is_far_dir_flip_flag_set() const { return far_dir_flip_flag_; }
 
 private:
-  int_type far_end_delay_steps_ = 150;
+  int_type home_dir_flip_flag_ = LOW;
+  int_type far_dir_flip_flag_ = LOW;
 };
 
 #endif
