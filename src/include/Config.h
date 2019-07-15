@@ -18,17 +18,17 @@ const double filament_percent_overlap = 0.2; // [0, 1]
 const int_type total_layers = 1;
 
 /* PRIVATE CALIBRATIONS - FOR DEVELOPER                                      */
-const double wrap_angle = deg_wrap_angle * PI / 180.0; // rad
 /* Define inverse relation such that mandrel velocity remains relatively
    stable over different wrap angles. Gain is typically in the range
    [100, 150] where 150 is fastest. */
-const double carriage_velocity = 120.0 / deg_wrap_angle; // in / s
+const double carriage_velocity = 120.0 / deg_wrap_angle; // in/s
+const double wrap_angle = deg_wrap_angle * PI / 180.0;   // rad
 
 /* CONSTANTS                                                                 */
-const int_type steps_per_rev = 200;
-const int_type mandrel_steps_per_rev = 850;
-const double carriage_pulley_pitch = 0.195;
-const int_type carriage_num_pulley_teeth = 12;
+const int_type steps_per_rev = 200;            // step/rev
+const int_type mandrel_steps_per_rev = 850;    // step/rev
+const double carriage_pulley_pitch = 0.195;    // in/step
+const int_type carriage_num_pulley_teeth = 12; // teeth/rev
 
 /* PRIVATE NAMESPACE FOR DERIVING CONSTANTS                                  */
 namespace
