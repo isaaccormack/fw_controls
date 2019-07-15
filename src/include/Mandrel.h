@@ -7,12 +7,11 @@
 class Mandrel : public Motor
 {
 public:
-  /* Implicitly construct motor with config variables */
-  Mandrel() : Motor(config::mandrel_step_pin, config::mandrel_dir_pin) {}
+  Mandrel() : Motor(config::mandrel_step_pin, 52) {} // No mandrel direction control => direction pin = 52
 
   void set_velocity(const double &tan_velocity)
   {
-    long_int_type usec_per_step = 1000000; // convert s to us
+    long_int_type usec_per_step = 1000000; // convert s -> us
     usec_per_step *= TWO_PI;
     usec_per_step *= config::mandrel_radius;
     usec_per_step /= (tan_velocity);
@@ -29,12 +28,12 @@ public:
   void inc_backup_step_count() { ++backup_step_count_; }
   void clear_backup_step_count() { backup_step_count_ = 0; }
 
-  void set_step_count_at_dir_flip() { step_count_at_dir_flip_ = step_count_; }
-  long_int_type get_step_count_at_dir_flip() { return step_count_at_dir_flip_; }
+  void set_step_count_at_far_dir_flip() { step_count_at_far_dir_flip_ = step_count_; }
+  int_type get_step_count_at_far_dir_flip() { return step_count_at_far_dir_flip_; }
 
-  void set_step_count_at_wind_start(const int_type &step_count_at_wind_start) { step_count_at_wind_start_ = step_count_at_wind_start; }
-  void add_to_step_count_at_wind_start(const int_type &additional_steps) { step_count_at_wind_start_ += additional_steps; }
-  int_type get_step_count_at_wind_start() const { return step_count_at_wind_start_; }
+  void set_step_count_at_start_of_pass(const int_type &step_count) { step_count_at_start_of_pass_ = step_count; }
+  void add_to_step_count_at_start_of_pass(const int_type &additional_steps) { step_count_at_start_of_pass_ += additional_steps; }
+  int_type get_step_count_at_start_of_pass() const { return step_count_at_start_of_pass_; }
 
   void add_to_far_end_wait_steps(const int_type &additional_steps) { far_end_wait_steps_ += additional_steps; }
   int_type get_far_end_wait_steps() const { return far_end_wait_steps_; }
@@ -42,11 +41,10 @@ public:
 private:
   int_type step_count_ = 0;
   int_type backup_step_count_ = 0;
-  long_int_type step_count_at_dir_flip_ = 0;
+  int_type step_count_at_far_dir_flip_ = 0;
 
-  int_type step_count_at_wind_start_ = 425; // DO NOT TOUCH - configuration algorithm assumes this value
-  // Linearly increase wait time with wrap angle since mandrel speed increases with wrap angle.
-  int_type far_end_wait_steps_ = 3 * config::deg_wrap_angle;
+  int_type step_count_at_start_of_pass_ = 425;               // DO NOT TOUCH - configuration algorithm assumes initial value
+  int_type far_end_wait_steps_ = 3 * config::deg_wrap_angle; // Mandrel speed increases with wrap angle => increase wait steps
 };
 
 #endif
