@@ -1,0 +1,22 @@
+Background:
+Due the inherent nature of stepper motors, there exists a natural frequency of rotation
+at which the stepper motor will be unable to rotate as intended and its behaviour
+becomes undefined. In some cases, loading the motor will mitigate this behaviour, but 
+in the case of mandrel stepper motor of the filament winding machine, it is unavoidable.
+At some wrap angles it is possible that the mandrel stepper will reach this natural frequency.
+A simple indicator of when the mandrel stepper speed is nearing its natural frequncy is that
+the stepper motor will vibrate more, and operation of the machine will become audibly louder.
+To allow for sinding wrap angles close to or on the natural frequency, the speed of the carriage,
+config::carriage_velocity, must be changed, as the mandrel speed is directly dependent on this.
+
+Procedure:
+The equation which sets the carriage velocity is currently:
+  
+  const double carriage_velocity = (80 + (9 * deg_wrap_angle / 10)) / deg_wrap_angle; // in/s
+
+By decreasing the numerator of the equation, a good way of doing this is decreasing the value of
+80, say to 60, the carriage velocity will decrease and inturn the mandrel velocity will decrease. 
+Thus the resonany frequency will be moved from occuring at the current wrap angle, to a higher 
+wrap angle (when the mandrel speed is once again fast enough to near the natural frequency).
+Thus, manipulating the numerator to change the speed of the mandrel will be sufficient to allow
+winding at the former troublesome wrap angle.
