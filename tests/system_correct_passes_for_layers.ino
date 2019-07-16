@@ -1,0 +1,46 @@
+/* Test Case: The number of passes completed is correct given the specified total layers
+
+  Setup: Ensure that the arduino.json file in the .vscode folder is loading the main.ino file by
+         setting: "sketch": "src/main.ino".
+
+  Precondition: The system_accurate_delay_distance_between_passes and system_consistency_of_passes_during_wind
+                tests have been run and passed. This test cannot yield meaningful results if the aforementioned
+                conditions are not true.
+
+  Units Under Test:
+    Physical: All - As in, error in any physical configuration could result in failure of test case.
+
+    Software:
+      In addition to the below member function / variable validation, validation of the implementation of the
+      control logic specific to this functionallity is also ment to be tested.
+      - config::calc_total_passes
+
+
+  Background: This is a system test intended to check that the correct number of passes are completed, given the
+              config::total_layers non-zero.
+
+  Test Parameters:
+    - config::total_layers should be tested with 1 and 2.
+    - config::wrap_angle should be tested over at least 3 distinct values
+    - config::filament_width should be tested first with 1in for brevity, then with a more realistic value of 0.125 in.
+
+  Procedure:
+    1. Attach a marker to the end of the filament application head (likely via rubber bands).
+    2. Tape paper around the mandrel which covers the area where the wind starts.
+    3. Run the code
+    4. Mark the first angled filament path leaving the home position (after the initial configuration pass) and the
+       last path before the wind ends.
+
+  Expected Results:
+    - The wind should stop executing after the first path which is past the initial path is completed, such that if
+      filament was being wound there would be no gap left uncovered. There should be no extra paths after the mandrel
+      is covered. 
+
+  LAST EXECUTED RESULTS:
+    - (July 15, 2019) The correct number of passes were completed for total layers being 1 and 2, the wrap angles being
+      30, 40, and 75 degrees, and the filament width begin 1 and 1/8in. 
+ */
+
+// void setup() {}
+
+// void loop() {}
