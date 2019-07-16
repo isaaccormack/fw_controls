@@ -4,7 +4,7 @@
          setting: "sketch": "src/main.ino".
 
   Units Under Test:
-    Physical Parameters: All
+    Physical: All - As in, error in any physical configuration could result in failure of test case.
 
     Software: All
 
@@ -21,12 +21,13 @@
     - may be tested over various wind lengths
 
   Procedure:
-    1. Set the config::calc_pass_offset_steps = 0 such that the machine will NOT increase the wait time at the
+    1. Set the config::pass_offset_steps = 0 such that the machine will NOT increase the wait time at the
         home end as to offset distance between passes.
-    2. Set the config::calc_total_passes = 10 to give an adequate number of passes to compare consistency between.
+    2. Set the config::total_passes = 10 to give an adequate number of passes to compare consistency between.
     3. Attach a marker to the end of the filament application head (likely via rubber bands).
     4. Tape paper around the mandrel which covering the full wind area.
-    5. Run the code and manually control the pressure of the marker on the mandrel as to not rip the paper, since
+    5. Run main.ino
+    6. Manually control the pressure of the marker on the mandrel as to not rip the paper, since
        the mandrel is not perfectly circular.
 
   Expected Results:

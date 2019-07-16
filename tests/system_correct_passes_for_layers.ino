@@ -11,9 +11,9 @@
     Physical: All - As in, error in any physical configuration could result in failure of test case.
 
     Software:
-      In addition to the below member function / variable validation, validation of the implementation of the
-      control logic specific to this functionallity is also ment to be tested.
-      - config::calc_total_passes
+      In addition to the below member variable, the implementation of the control logic
+      in the main winding loop is also tested.
+      - config::passes_per_layer
 
 
   Background: This is a system test intended to check that the correct number of passes are completed, given the
@@ -27,7 +27,7 @@
   Procedure:
     1. Attach a marker to the end of the filament application head (likely via rubber bands).
     2. Tape paper around the mandrel which covers the area where the wind starts.
-    3. Run the code
+    3. Run main.ino
     4. Mark the first angled filament path leaving the home position (after the initial configuration pass) and the
        last path before the wind ends.
 

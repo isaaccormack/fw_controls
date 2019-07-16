@@ -12,7 +12,7 @@
     Software:
       In addition to the below member function / variable validation, validation of the implementation of the
       control logic specific to this functionallity is also ment to be tested.
-      - config::calc_pass_offset_steps
+      - config::pass_offset_steps
       - Mandrel.inc_step_count_at_start_of_pass();
 
 
@@ -26,7 +26,7 @@
 
   Procedure:
     1. Set the config::filament_percent_overlap = 0. 
-    2. Set the config::calc_total_passes = 10 to give an adequate number of passes to compare consistency between.
+    2. Set the config::total_passes = 10 to give an adequate number of passes to compare consistency between.
     3. Attach a marker to the end of the filament application head (likely via rubber bands).
     4. Tape paper around the mandrel which covering the full wind area.
     5. Serial data must be written out when the carriage begin each pass such that the incrementing of steps
@@ -38,7 +38,8 @@
           Serial.print("\n");
           Carriage.clear_home_dir_flip_flag();
         }
-    6. Run the code and manually control the pressure of the marker on the mandrel as to not rip the paper, since
+    6. Run main.ino
+    7. Manually control the pressure of the marker on the mandrel as to not rip the paper, since
        the mandrel is not perfectly circular.
     7. For a value of filament_width of which offset is noticable by eyesight, maybe 1, set
        config::filament_percent_overlap = 0.5.
