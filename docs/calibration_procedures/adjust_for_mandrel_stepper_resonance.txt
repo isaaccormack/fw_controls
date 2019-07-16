@@ -19,4 +19,7 @@ By decreasing the numerator of the equation, a good way of doing this is decreas
 Thus the resonany frequency will be moved from occuring at the current wrap angle, to a higher 
 wrap angle (when the mandrel speed is once again fast enough to near the natural frequency).
 Thus, manipulating the numerator to change the speed of the mandrel will be sufficient to allow
-winding at the former troublesome wrap angle.
+winding at the former troublesome wrap angle. Remember to change the of the numerator back to
+original value or update comment which defines machines operable wrap angles after the machine
+has been utilzed at this wrap angle. The above setting for carriage_velocity can be seen as 
+a default.
