@@ -1,9 +1,7 @@
 /* Test Case: Filament wind path is the same over multiple passes
 
   Setup: Ensure that the arduino.json file in the .vscode folder is loading the main.ino file by
-         setting: "sketch": "src/main.ino" Then, manually set the config::calc_pass_offset_steps = 0
-         such that the machine will NOT increase the wait time at the home end as to offset distance
-         between passes.
+         setting: "sketch": "src/main.ino".
 
   Units Under Test:
     Physical Parameters: All
