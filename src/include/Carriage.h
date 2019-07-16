@@ -26,7 +26,8 @@ private:
   int_type home_dir_flip_flag_ = LOW;
   int_type far_dir_flip_flag_ = LOW;
 
-  constexpr static long_int_type scaled_inch_per_step_ = (1000000 * config::carriage_pulley_pitch * config::carriage_num_pulley_teeth) /
+  constexpr static long_int_type scaled_inch_per_step_ = (1000000 * config::carriage_pulley_pitch *
+                                                          config::carriage_num_pulley_teeth) /
                                                          config::steps_per_rev;
 };
 
