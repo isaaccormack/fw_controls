@@ -11,13 +11,7 @@ public:
 
   void set_velocity(const float &velocity)
   {
-    long_int_type usec_per_step = 1000000; // Convert s -> us
-    usec_per_step *= config::carriage_pulley_pitch;
-    usec_per_step *= config::carriage_num_pulley_teeth;
-    usec_per_step /= velocity;
-    usec_per_step /= config::steps_per_rev;
-
-    set_usec_per_step(usec_per_step);
+    set_usec_per_step(scaled_inch_per_step_ / velocity);
   }
 
   void set_home_dir_flip_flag() { home_dir_flip_flag_ = HIGH; }
@@ -31,6 +25,9 @@ public:
 private:
   int_type home_dir_flip_flag_ = LOW;
   int_type far_dir_flip_flag_ = LOW;
+
+  constexpr static long_int_type scaled_inch_per_step_ = (1000000 * config::carriage_pulley_pitch * config::carriage_num_pulley_teeth) /
+                                                         config::steps_per_rev;
 };
 
 #endif
