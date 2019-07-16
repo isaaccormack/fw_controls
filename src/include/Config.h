@@ -7,49 +7,52 @@ typedef unsigned int int_type;
 typedef unsigned long int long_int_type;
 
 /* HOMING CALIBRATIONS                                                       */
-const double carriage_homing_velocity = 2; // in/s
-const double mandrel_homing_velocity = 5;  // in/s
+constexpr double carriage_homing_velocity = 2; // in/s
+constexpr double mandrel_homing_velocity = 5;  // in/s
 
-/* PUBLIC CALIBRATIONS - FOR USER                                            */
-const double deg_wrap_angle = 25;            // [10, 80]
-const double mandrel_radius = 2.24806;       // in
-const double filament_width = 0.125;         // in
-const double filament_percent_overlap = 0.2; // [0, 1]
-const int_type total_layers = 1;
+/* CALIBRATIONS FOR USER                                                     */
+/* The wrap angle is not defined between (53, 60) due to resonance in the mandrel
+   stepper motor. To wind at angles on this value, the equation driving 
+   carriage_velocity must be recalibrated as to change the speed of mandrel. */
+constexpr double deg_wrap_angle = 70;            // Defined between [20, 53] and [60, 80]
+constexpr double mandrel_radius = 2.24806;       // in
+constexpr double filament_width = 1;             // in - Perpendical distance between angled filament strands
+constexpr double filament_percent_overlap = 0.0; // [0, 1]
+constexpr int_type total_layers = 4;             // 1 layer is 2 physical layers due to nature of winding
 
-/* PRIVATE CALIBRATIONS - FOR DEVELOPER                                      */
+/* CALIBRATIONS FOR DEVELOPER                                                */
 /* Define inverse relation such that mandrel velocity remains relatively
-   stable over different wrap angles. Gain is typically in the range
-   [100, 150] where 150 is fastest. */
-const double carriage_velocity = 120.0 / deg_wrap_angle; // in/s
-const double wrap_angle = deg_wrap_angle * PI / 180.0;   // rad
+   stable over different wrap angles. Gain, given by numerator of expression
+   ranges from 98 for 20 deg_wrap_angle to 152 for 80 deg_wrap_angle */
+constexpr double carriage_velocity = (80 + (9 * deg_wrap_angle / 10)) / deg_wrap_angle; // in/s
+constexpr double wrap_angle = deg_wrap_angle * PI / 180.0;                              // rad
 
 /* CONSTANTS                                                                 */
-const int_type steps_per_rev = 200;            // step/rev
-const int_type mandrel_steps_per_rev = 850;    // step/rev
-const double carriage_pulley_pitch = 0.195;    // in/step
-const int_type carriage_num_pulley_teeth = 12; // teeth/rev
+constexpr int_type steps_per_rev = 200;            // step/rev
+constexpr int_type mandrel_steps_per_rev = 850;    // step/rev
+constexpr double carriage_pulley_pitch = 0.195;    // in/step
+constexpr int_type carriage_num_pulley_teeth = 12; // teeth/rev
 
-/* PRIVATE NAMESPACE FOR DERIVING CONSTANTS                                  */
+/* PRIVATE CONSTANTS                                                         */
 namespace
 {
-/* Constants which must be derived in floating point then typecasted to
-   integral type to combat round off error are created here. */
-const double eff_filament_width = filament_width * (1.0 - filament_percent_overlap);
-const double calc_total_passes = 2.0 * total_layers * TWO_PI * mandrel_radius /
-                                 eff_filament_width;
+constexpr double pass_offset_length = filament_width / cos(wrap_angle);
+constexpr double eff_pass_offset_length = pass_offset_length * (1.0 - filament_percent_overlap);
 } // namespace
 
 /* DERIVED CONSTANTS                                                         */
-int_type total_passes = (int_type)calc_total_passes + 1;
+constexpr int_type pass_offset_steps = (double)eff_pass_offset_length * mandrel_steps_per_rev /
+                                       (TWO_PI * mandrel_radius);
+constexpr int_type passes_per_layer = (double)1 + (TWO_PI * mandrel_radius /
+                                                   eff_pass_offset_length);
 
 /* I/O PINS                                                                  */
-const int_type c_far_switch_pin = 13;
-const int_type c_home_switch_pin = 12;
-const int_type m_encoder_switch_pin = 11;
-const int_type carriage_step_pin = 7;
-const int_type carriage_dir_pin = 6;
-const int_type mandrel_step_pin = 5;
+constexpr int_type c_far_switch_pin = 13;
+constexpr int_type c_home_switch_pin = 12;
+constexpr int_type m_encoder_switch_pin = 11;
+constexpr int_type carriage_step_pin = 7;
+constexpr int_type carriage_dir_pin = 6;
+constexpr int_type mandrel_step_pin = 5;
 } // namespace config
 
 #endif
