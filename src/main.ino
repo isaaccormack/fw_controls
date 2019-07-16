@@ -7,6 +7,8 @@ typedef config::long_int_type long_int_type;
 
 int main_()
 {
+  Serial.begin(115200);
+
   Carriage Carriage;
   Mandrel Mandrel;
 
@@ -150,8 +152,27 @@ int main_()
   delay(1000);
 
   int_type passes = 0;
-  while (passes < config::total_passes)
+  int_type layers = 0;
+  while (layers < config::total_layers)
   {
+    if (passes == config::passes_per_layer)
+    {
+      passes = 0;
+      ++layers;
+      if (layers % 2 == 0)
+      {
+        Mandrel.set_step_count_at_start_of_pass_even();
+      }
+      else
+      {
+        Mandrel.set_step_count_at_start_of_pass_odd();
+      }
+      for (int i = 0; i < layers / 2; ++i)
+      {
+        Mandrel.inc_step_count_at_start_of_pass();
+      }
+    }
+
     long_int_type curr_usec = micros();
     if (curr_usec - Mandrel.get_last_step_time() > Mandrel.get_usec_per_step())
     {
@@ -196,8 +217,11 @@ int main_()
 
     if (C_Home_Switch.is_rising_edge())
     {
+      Mandrel.inc_step_count_at_start_of_pass();
+
       Carriage.flip_dir();
       Carriage.set_home_dir_flip_flag();
+      ++passes;
     }
 
     if (M_Encoder_Switch.is_rising_edge())
@@ -213,9 +237,6 @@ int main_()
   return 0;
 }
 
-void setup()
-{
-  main_();
-}
+void setup() { main_(); }
 
 void loop() {}
