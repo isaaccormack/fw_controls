@@ -1,6 +1,3 @@
-#include "/Users/i/Documents/Arduino/fw_controls/src/include/Carriage.h"
-#include "/Users/i/Documents/Arduino/fw_controls/src/include/Config.h"
-
 /* Test Case: Filament wind path is the same over multiple passes
 
   Setup: Ensure that the arduino.json file in the .vscode folder is loading the main.ino file by
