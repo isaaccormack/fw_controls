@@ -10,7 +10,7 @@ To allow for sinding wrap angles close to or on the natural frequency, the speed
 config::carriage_velocity, must be changed, as the mandrel speed is directly dependent on this.
 
 Procedure:
-The equation which sets the carriage velocity is currently:
+The equation which sets the carriage velocity is currently: (located in Config.h)
   
   const double carriage_velocity = (80 + (9 * deg_wrap_angle / 10)) / deg_wrap_angle; // in/s
 
