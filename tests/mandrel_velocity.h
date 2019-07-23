@@ -9,7 +9,7 @@
 
   Setup: Ensure that the arduino.json file in the .vscode folder is loading
          this test file by setting: "sketch": "tests/test_runner.ino" and that
-         this function is being run by the test file.
+         test_mandrel_velocity_ is being run by the test file.
 
   Units Under Test: Mandrel.set_velocity()
 
