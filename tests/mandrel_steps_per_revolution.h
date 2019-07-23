@@ -10,7 +10,7 @@
 
   Setup: Ensure that the arduino.json file in the .vscode folder is loading
          this test file by setting: "sketch": "tests/test_runner.ino" and that
-         test_mandrel_steps_per_revolution_ is being run by the test file.
+         test_mandrel_steps_per_revolution_ is being run by test_runner.ino..
 
   Units Under Test:
     Physical Parameters:
