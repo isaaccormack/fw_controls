@@ -1,16 +1,12 @@
-#ifndef TEST_MANDREL_STEPS_PER_REVOLUTION_H
-#define TEST_MANDREL_STEPS_PER_REVOLUTION_H
-
-/* MUST GIVE FULL PATH OF INCLUDES GIVEN CURRENT PROJECT STRUCTRE */
-#include "/Users/i/Documents/Arduino/fw_controls/src/include/Mandrel.h"
-#include "/Users/i/Documents/Arduino/fw_controls/src/include/Config.h"
+/* MUST GIVE FULL PATH OF INCLUDES -- WILL NEED TO CHANGE PER DEVELOPER */
+#include "/Users/i/Documents/Arduino/fw_controls/main/include/Mandrel.h"
+#include "/Users/i/Documents/Arduino/fw_controls/main/include/Config.h"
 
 /* Test Case: Mandrel performs correct number of rotations given a the number of steps to compelete 
               this many rotations as calculated ftom an arbitrary angular velocity 
 
-  Setup: Ensure that the arduino.json file in the .vscode folder is loading
-         this test file by setting: "sketch": "tests/test_runner.ino" and that
-         test_mandrel_steps_per_revolution_ is being run by test_runner.ino..
+  Setup: Ensure that the arduino.json file in the .vscode folder is loading this test file 
+         by setting: "sketch": "tests/mandrel_steps_per_revolution/mandrel_steps_per_revolution.ino"
 
   Units Under Test:
     Physical Parameters:
@@ -93,4 +89,6 @@ int test_mandrel_steps_per_revolution_()
   return 0;
 }
 
-#endif
+void setup() { test_mandrel_steps_per_revolution_(); }
+
+void loop() {}

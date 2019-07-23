@@ -1,15 +1,11 @@
-#ifndef TEST_CARRIAGE_VELOCITY_H
-#define TEST_CARRIAGE_VELOCITY_H
-
-/* MUST GIVE FULL PATH OF INCLUDES GIVEN CURRENT PROJECT STRUCTRE */
-#include "/Users/i/Documents/Arduino/fw_controls/src/include/Carriage.h"
-#include "/Users/i/Documents/Arduino/fw_controls/src/include/Config.h"
+/* MUST GIVE FULL PATH OF INCLUDES -- WILL NEED TO CHANGE PER DEVELOPER */
+#include "/Users/i/Documents/Arduino/fw_controls/main/include/Carriage.h"
+#include "/Users/i/Documents/Arduino/fw_controls/main/include/Config.h"
 
 /* Test Case: Carriage performs correct number of steps given a velocity and length of time
 
-  Setup: Ensure that the arduino.json file in the .vscode folder is loading
-         this test file by setting: "sketch": "tests/test_runner.ino" and that
-         test_carriage_velocity_ is being run by test_runner.ino.
+  Setup: Ensure that the arduino.json file in the .vscode folder is loading this test file 
+         by setting: "sketch": "tests/carriage_velocity/carriage_velocity.ino"
 
   Units Under Test: Carriage.set_velocity()
 
@@ -99,4 +95,6 @@ int test_carriage_velocity_()
   return 0;
 }
 
-#endif
+void setup() { test_carriage_velocity_(); }
+
+void loop() {}

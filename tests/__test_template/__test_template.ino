@@ -1,11 +1,13 @@
-#ifndef TEST_TEMPLATE_H
-#define TEST_TEMPLATE_H
+/* .ino files must be inside an accompanying sketch folder of the same name by Arduino project requirements */
 
 /* Any includes required go here */
 
 /* Test Case: <Descriptive title goes here>
 
-  Setup: <Required steps before test case can be executed>
+  Setup: <Required steps before test case can be executed, usually the sketch to be executed
+          is specified here such as:
+          Ensure that the arduino.json file in the .vscode folder is loading this test file 
+         by setting: "sketch": "tests/__test_template/__test_template.ino">
 
   Unit Under Test: <Classes and corresponding methods or functions being tested>
 
@@ -47,4 +49,6 @@ int test_case_name_()
   return 0;
 }
 
-#endif
+void setup() { test_case_name_(); }
+
+void loop() {}

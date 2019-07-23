@@ -1,15 +1,11 @@
-#ifndef TEST_MANDREL_VELOCITY_H
-#define TEST_MANDREL_VELOCITY_H
-
-/* MUST GIVE FULL PATH OF INCLUDES GIVEN CURRENT PROJECT STRUCTRE */
-#include "/Users/i/Documents/Arduino/fw_controls/src/include/Mandrel.h"
-#include "/Users/i/Documents/Arduino/fw_controls/src/include/Config.h"
+/* MUST GIVE FULL PATH OF INCLUDES -- WILL NEED TO CHANGE PER DEVELOPER */
+#include "/Users/i/Documents/Arduino/fw_controls/main/include/Mandrel.h"
+#include "/Users/i/Documents/Arduino/fw_controls/main/include/Config.h"
 
 /* Test Case: Mandrel performs correct number of steps given a velocity and length of time
 
-  Setup: Ensure that the arduino.json file in the .vscode folder is loading
-         this test file by setting: "sketch": "tests/test_runner.ino" and that
-         test_mandrel_velocity_ is being run by test_runner.ino.
+  Setup: Ensure that the arduino.json file in the .vscode folder is loading this test file 
+         by setting: "sketch": "tests/mandrel_velocity/mandrel_velocity.ino"
 
   Units Under Test: Mandrel.set_velocity()
 
@@ -84,4 +80,6 @@ int test_mandrel_velocity_()
   return 0;
 }
 
-#endif
+void setup() { test_mandrel_velocity_(); }
+
+void loop() {}

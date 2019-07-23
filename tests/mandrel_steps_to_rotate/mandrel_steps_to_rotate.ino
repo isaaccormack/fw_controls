@@ -1,16 +1,12 @@
-#ifndef TEST_MANDREL_STEPS_TO_ROTATE_H
-#define TEST_MANDREL_STEPS_TO_ROTATE_H
-
-/* MUST GIVE FULL PATH OF INCLUDES GIVEN CURRENT PROJECT STRUCTRE */
-#include "/Users/i/Documents/Arduino/fw_controls/src/include/Mandrel.h"
-#include "/Users/i/Documents/Arduino/fw_controls/src/include/Switch.h"
-#include "/Users/i/Documents/Arduino/fw_controls/src/include/Config.h"
+/* MUST GIVE FULL PATH OF INCLUDES -- WILL NEED TO CHANGE PER DEVELOPER */
+#include "/Users/i/Documents/Arduino/fw_controls/main/include/Mandrel.h"
+#include "/Users/i/Documents/Arduino/fw_controls/main/include/Switch.h"
+#include "/Users/i/Documents/Arduino/fw_controls/main/include/Config.h"
 
 /* Test Case: Step counter for mandrel records 850 +- 2 steps between each mandrel limit switch rising edge (once per revolution)
 
-  Setup: Ensure that the arduino.json file in the .vscode folder is loading
-         this test file by setting: "sketch": "tests/test_runner.ino" and that
-         test_mandrel_steps_to_rotate_ is being run by test_runner.ino.
+  Setup: Ensure that the arduino.json file in the .vscode folder is loading this test file 
+         by setting: "sketch": "tests/mandrel_steps_to_rotate/mandrel_steps_to_rotate.ino"
 
   Units Under Test:
     Physical Parameters:
@@ -88,4 +84,6 @@ int test_mandrel_steps_to_rotate_()
   return 0;
 }
 
-#endif
+void setup() { test_mandrel_steps_to_rotate_(); }
+
+void loop() {}

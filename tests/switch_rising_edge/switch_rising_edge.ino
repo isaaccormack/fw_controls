@@ -1,16 +1,12 @@
-#ifndef TEST_SWITCH_RISING_EDGE_H
-#define TEST_SWITCH_RISING_EDGE_H
-
-/* MUST GIVE FULL PATH OF INCLUDES GIVEN CURRENT PROJECT STRUCTRE */
-#include "/Users/i/Documents/Arduino/fw_controls/src/include/Switch.h"
-#include "/Users/i/Documents/Arduino/fw_controls/src/include/Config.h"
+/* MUST GIVE FULL PATH OF INCLUDES -- WILL NEED TO CHANGE PER DEVELOPER */
+#include "/Users/i/Documents/Arduino/fw_controls/main/include/Switch.h"
+#include "/Users/i/Documents/Arduino/fw_controls/main/include/Config.h"
 
 /* Test Case: Rising edge of limit switch when pressed is properly detected and
               switch is debounced.
 
-  Setup: Ensure that the arduino.json file in the .vscode folder is loading
-         this test file by setting: "sketch": "tests/test_runner.ino" and that
-         test_switch_rising_edge_ is being run by test_runner.ino.
+  Setup: Ensure that the arduino.json file in the .vscode folder is loading this test file 
+         by setting: "sketch": "tests/switch_rising_edge/switch_rising_edge.ino"
 
   Unit Under Test:
     Physical:
@@ -66,4 +62,6 @@ int test_switch_rising_edge_()
   return 0;
 }
 
-#endif
+void setup() { test_switch_rising_edge_(); }
+
+void loop() {}
