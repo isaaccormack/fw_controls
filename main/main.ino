@@ -209,8 +209,6 @@ int main_()
 
     if (C_Far_Switch.is_rising_edge())
     {
-      // Begin acceleration profile here with default parameters
-
       Mandrel.set_step_count_at_far_dir_flip();
 
       Carriage.flip_dir();
