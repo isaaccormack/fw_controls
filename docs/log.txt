@@ -105,3 +105,48 @@ consistent between the two. Holding the limit switches stable / fiddling with th
 BUG FIX: the bug was found to be caused by the use of the millis method within the switch class such that consistently calling
 the method gives small difference between actual time button had rising edge and time recorded. These inaccuracies accumulate over
 time to cause sporadic behaviour as observed
+
+July 15 2019
+COULD ADD DOC FILES MIRRORING CLASSES/ MAIN TO document things, maybe in the manner of:
+
+// Use linearization fcn with gain of 120 to keep mandrel velocity relatively stable over different wrap angles
+// Gain can vary between 100 (at slowest) and 150 according to best behaving mandrel speeds (wrt slip and torque)
+// const double carriage_velocity = 200.0 / deg_wrap_angle; // in / s
+const double carriage_velocity = 120.0 / deg_wrap_angle; // in / s
+
+
+Note on the backup step counter reecntly added to main:
+
+Note that using a backup step counter for mandrel is only required if is is possible the mandrel encoder
+switch will not be hit during a pass due to sufficiently small wrap_length and/or wrap angle. That is, if the
+number of steps the mandrel takes during a single pass is < ~860 (860 since can be more than 850 so pick safe
+value) then we need to sync the mandrel step count with backup every turn around to ensure that when cariage
+reaches the home end we have a value for the mandrel step count of 0 <= mandrel step count <= 850 so that
+the wait time on each end is optimized. Namely, the unoptimization occurs when the step count at home is > 850
+such that the mandrel needs to do an extra loop to clear the step count before it then is able to accurately
+count up the value it should be at (say 100) for the beggining of the next loop.
+
+Specifically, the condition where backup_mandrel_step_count is needed is when:
+    (mandrel_steps_per_rev * wrap_length * tan(wrap_angle)) / (TWO_PI * mandrel_radius) < ~860
+
+For now I leave the backup_mandrel_step_count in all the time, knowing that for most use cases it is extraneous
+to keep code simple
+
+Note on find minimal far end wait time algorithm:
+
+Given mandrel step_count_at_wind_start is 425, we want to ensure that mandrel step count when arriving at 
+home is not in the range [425 - minimum_wait_steps, 425 + 50]. The bottom limit is so we can ensure the
+mandrel wait at least the minimum time at the home end during turnaround, and the top limit for safety such
+that if the mandrel step count when the carriage arrives at home is barely more than 425, say 426, then if on
+the next pass the mandrel step count is 424 (by generally tolerance error) this does not interfere with the wait
+time (ie. the mandrel step count would have to decrease by 50 the next time for this to occur which
+is inconcievable).
+
+Note on mandrel steps per rev
+/* - Note that Mandrel motor has 4.25 : 1 gear ratio. The motor itself has 200 steps per
+ * revolution -> 200 * 4.25 = 850 steps per revolution
+ * - Also note the gear box has 1.5 degrees of blacklash error due to gearbox */
+
+sync_step_count_with_backup guarantees that step count for mandrel is always in range [0, 850]
+
+could add section on environment setup to aid next developer in setting up vscode with arduino
