@@ -67,15 +67,15 @@ int test_mandrel_steps_per_revolution_()
 
   /* START TEST PARAMETERS */
   // 3.5 <= tan_vel <= 10 in/s -- for > 10in/s, results are comprimised by slippage of motor due to fast acceleration
-  double tan_vel = 8;
+  const double tan_vel = 8;
   // 1 <= revolutions <= 20
-  long_int_type revolutions = 5;
+  const long_int_type revolutions = 5;
   /* END TEST PARAMETERS */
 
   Mandrel.set_velocity(tan_vel);
 
   // steps = (steps / rev) * rev
-  long_int_type total_steps = config::mandrel_steps_per_rev * revolutions;
+  const long_int_type total_steps = config::mandrel_steps_per_rev * revolutions;
   long_int_type step_count = 0;
   while (step_count < total_steps)
   {

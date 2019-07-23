@@ -50,20 +50,20 @@ int test_mandrel_velocity_()
 
   /* START TEST PARAMETERS */
   // 3.5 <= tan_vel <= 10 in/s -- for > 10in/s, results are comprimised by slippage of motor due to fast acceleration
-  double tan_vel = 10;
+  const double tan_vel = 10;
   // 1 <= revolutions <= 10
-  long_int_type revolutions = 2;
+  const long_int_type revolutions = 2;
   /* END TEST PARAMETERS */
 
   double ang_vel = (tan_vel / TWO_PI) / config::mandrel_radius;
 
   // Set test time to time required to do the number of defined revolutions
-  long_int_type test_time = (1000000 * revolutions) / ang_vel; // 1,000,000 us = 1s
+  const long_int_type test_time = (1000000 * revolutions) / ang_vel; // 1,000,000 us = 1s
 
   Mandrel.set_velocity(tan_vel);
 
-  long_int_type start_time = micros();
-  long_int_type end_time = test_time + start_time;
+  const long_int_type start_time = micros();
+  const long_int_type end_time = test_time + start_time;
 
   long_int_type step_count = 0;
   while (micros() < end_time)
