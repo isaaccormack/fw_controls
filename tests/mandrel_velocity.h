@@ -13,7 +13,8 @@
 
   Units Under Test: Mandrel.set_velocity()
 
-  Insight: Accurate velocity of the mandrel is integral to the functioning of the machine
+  Insight: Ensure the equation to define the velocity for the mandrel is correct by derivation and
+           implementation
 
   Procedure:
     1. Decide on a range of tan_vel and revolutions values to execute this test case over
