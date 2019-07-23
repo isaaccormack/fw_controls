@@ -1,0 +1,47 @@
+Test Case: Filament wind path is the same over multiple passes
+
+Setup: Ensure that the arduino.json file in the .vscode folder is loading the main.ino file by
+        setting: "sketch": "src/main.ino".
+
+Units Under Test:
+  Physical: All - As in, error in any physical configuration could result in failure of test case.
+
+  Software: All
+
+Background: This is a system test intended to check sanity and calibration of software and physical machine
+            after major changes are made to the 2 axis software. Almost all parts of software and hardware 
+            functionality (including homing and calibraion) will be used in this test.
+
+Insight: Given the machine can precisely do the same pass pattern such that the start position of the mandrel
+          and the wind angle are the same over multiple passes, it follows that adding an offset on one end per
+          complete pass will generate a 2 axis filament wind.
+
+Test Parameters:
+  - config::deg_wrap_angle should be tested for the values [20, 30, .... 70, 80]
+  - may be tested over various lengths of winds
+
+Procedure:
+  1. Set the config::pass_offset_steps = 0 such that the machine will NOT increase the wait time at the
+      home end as to offset distance between passes.
+  2. Set the config::total_layers >= 2 to give an adequate number of passes to compare consistency between.
+  3. Attach a marker to the end of the filament application head (likely via rubber bands).
+  4. Tape paper around the mandrel which covering the full wind area.
+  5. Run main.ino
+  6. Manually control the pressure of the marker on the mandrel as to not rip the paper and record the path
+     of the applicator head on the mandrel.
+
+Expected Results:
+  - The marker should draw the exact same path for each pass. Deviances between passes with respect to 
+    start position, delay time, or wrap angle indicate defective system behaviour. Specifically, repeated 
+    incremental increases / decreases in start position such that each pass is starting only slightly after / before
+    the previous start position at a difference large enough to be noticable by visual inspection should be seen as
+    a defect in system behaviour and diagnosed. The positional tolerance between wraps is +- 1/32".
+    
+  - It should be noted that if the mandrel is seen to move sporadically at a particular the wrap_angle, the equation
+    used to define config::carriage_velocity (which relies on wrap_angle), and in turn sets the speed for the mandrel
+    velocity likely needs should be recalibrated / changed (if the problem is not physical).
+
+LAST EXECUTED RESULTS:
+  - (July 15, 2019) Path was traversed exactly over all wrap angle values and over both a ~5 and ~40 inch wind length.
+    No visible deviate was seen over multiple passes for any values. Note that the resonant frequency of the motor 
+    was calibrated to occur at a wrap angle of around 55 degrees, so this was a non-issue. 

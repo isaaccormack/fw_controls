@@ -1,0 +1,59 @@
+Test Case: Delay distance between passes is both consistent and accurate
+
+Setup: Ensure that the arduino.json file in the .vscode folder is loading the main.ino file by
+        setting: "sketch": "src/main.ino".
+
+Precondition: The system_consistency_of_passes_during_wind test has been run and passed. This test
+              cannot yield meaningful results if the aforementioned is not true.
+
+Units Under Test:
+  Physical: All - As in, error in any physical configuration could result in failure of test case.
+
+  Software:
+    In addition to the below member function / variable validation, validation of the implementation of the
+    control logic specific to this functionallity is also ment to be tested.
+    - config::pass_offset_steps
+    - Mandrel.inc_step_count_at_start_of_pass();
+
+
+Background: This is a system test intended to check primarily the accuracy, followed by the consistency,
+            of the offset length between passes. This functionality is crucial to creating precise wraps
+            as it determines the accuracy in which the filament strands can be layed next to one another. 
+
+Test Parameters:
+  - config::filament_width should be tested for the values [1/16. 1/8, 1/4, 1/2, 1]
+  - config::wrap_angle should be tested over at least 3 distinct values
+
+Procedure:
+  1. Set the config::filament_percent_overlap = 0. 
+  2. Set the config::total_layers >= 2 to give an adequate number of passes to compare consistency between.
+  3. Attach a marker to the end of the filament application head (likely via rubber bands).
+  4. Tape paper around the mandrel which covering the full wind area.
+  5. Serial data must be written out when the carriage begin each pass such that the incrementing of steps
+      between passes can be validated. This is done by adding the following in main.ino:
+      if (Mandrel.get_step_count() == Mandrel.get_step_count_at_start_of_pass())
+      {
+        Serial.print("Mandrel step count");
+        Serial.print(Mandrel.get_step_count());
+        Serial.print("\n");
+        Carriage.clear_home_dir_flip_flag();
+      }
+  6. Run main.ino
+  7. Manually control the pressure of the marker on the mandrel as to not rip the paper, since
+      the mandrel is not perfectly circular.
+  7. For a value of filament_width of which offset is noticable by eyesight, maybe 1, set
+      config::filament_percent_overlap = 0.5.
+
+Expected Results:a
+  - The perpendicular length between angled lines should be filament_width +- 1/32" for all values. This distance is 
+    NOT to be confused with the delay distance at the home end (call it d, d = l*cos(wrap_angle), where l is the 
+    perpendicular distance measured). The delay distance should be consistent between successive passes to the same
+    tolerance. In the serial data, it should be shown that the delay steps is incremented by the correct value (compare
+    against manually calculated value), and that the rollover when the delay steps are > 849 is properly handled.
+
+  - In the case where config::filament_percent_overlap is non-zero, the carriage should delay a distance of the 
+    filament_width * (1.0 - filament_percent_overlap) to the same tolerance as above.
+
+LAST EXECUTED RESULTS:
+  - (July 15, 2019) Offest was correct for all values over wrap angles of 30, 45, and 65 degrees. The tolerance of
+    perpendicular length distance between lines was +- 1/32".
