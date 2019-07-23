@@ -35,7 +35,7 @@
     then +- 2 step should be seen as symptomatic of an issue within the system as there is no reason this should be acceptable.
 
     LAST EXECUTED RESULTS:
-      - (July 11, 2019) After adding an RC circuit to debounce the switch the experimental results match expected and
+      - (July 22, 2019) After adding an RC circuit to debounce the switch the experimental results match expected and
         fit within the tolerance range (+- 2 step per 850 steps).
  */
 
