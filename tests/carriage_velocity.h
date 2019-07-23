@@ -66,9 +66,9 @@ int test_carriage_velocity_()
   /* START TEST PARAMETERS */
   // Choose values that satisfy carriage velocity equation as given in config.h
   // 2 <= vel <= 6.5 for current implementation
-  double vel = 2; // in/s
+  const double vel = 2; // in/s
   // 1 <= test_time <= 10
-  double test_time = 1.5; // s
+  const double test_time = 1.5; // s
   /* END TEST PARAMETERS */
 
   Carriage.set_velocity(vel);
@@ -90,12 +90,12 @@ int test_carriage_velocity_()
     ++counter;
   }
   // Optional debug output
-  Serial.print((micros() - start_time) / 1000);
-  Serial.print(" <- Total time taken (ms)\n");
-  Serial.print(step_count);
-  Serial.print(" <- Total steps taken\n");
-  Serial.print(counter);
-  Serial.print(" <- Total loops\n");
+  // Serial.print((micros() - start_time) / 1000);
+  // Serial.print(" <- Total time taken (ms)\n");
+  // Serial.print(step_count);
+  // Serial.print(" <- Total steps taken\n");
+  // Serial.print(counter);
+  // Serial.print(" <- Total loops\n");
   return 0;
 }
 
