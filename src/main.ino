@@ -57,8 +57,8 @@ int main_()
       Mandrel.inc_backup_step_count();
     }
 
-    /* Note that is_rising_edge() sometimes buggy and reports true on falling edge. Think this is 
-       because of long indeterminate state (~50ms) on falling edge due to RC values in RC circuit
+    /* Note that is_rising_edge() sometimes reports true on falling edge. Think this is because 
+       of long indeterminate state (~50ms) on falling edge due to RC values in RC circuit
        (ie. a LOW value is read then a HIGH value due to indeterminate state).
        Possible solved by using latched switches? */
     if (M_Encoder_Switch.is_rising_edge())
@@ -107,7 +107,7 @@ int main_()
         if (Mandrel.get_step_count() - Mandrel.get_step_count_at_far_dir_flip() >= Mandrel.get_far_end_wait_steps())
         {
           Carriage.clear_far_dir_flip_flag();
-          Mandrel.sync_step_count_with_backup(); // Guarantees step count after direction change always in range [0, ~850]
+          Mandrel.sync_step_count_with_backup();
         }
       }
       else
@@ -146,7 +146,7 @@ int main_()
                     <2 Axis Filament Wind for User Defined Passes>
 
   Main routine which performs a 2 axis filament wind at users specifications defined
-  in Config.h under PUBLIC CALIBRATIONS.
+  in Config.h under CALIBRATIONS FOR USER.
   ---------------------------------------------------------------------------*/
 
   delay(1000);
@@ -169,7 +169,7 @@ int main_()
       }
       for (int i = 0; i < layers / 2; ++i)
       {
-        Mandrel.inc_step_cout_at_start_of_pass();
+        Mandrel.inc_step_count_at_start_of_pass();
       }
     }
 
@@ -190,7 +190,7 @@ int main_()
         if (Mandrel.get_step_count() - Mandrel.get_step_count_at_far_dir_flip() >= Mandrel.get_far_end_wait_steps())
         {
           Carriage.clear_far_dir_flip_flag();
-          Mandrel.sync_step_count_with_backup(); // Guarantees step count after direction change always in range [0, ~850]
+          Mandrel.sync_step_count_with_backup();
         }
       }
       else if (Carriage.is_home_dir_flip_flag_set())
