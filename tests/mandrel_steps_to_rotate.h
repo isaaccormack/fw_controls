@@ -52,7 +52,7 @@ int test_mandrel_steps_to_rotate_()
   // 3.5 <= tan_vel <= 10 in/s -- for > 10in/s, results are comprimised by slippage of motor due to fast acceleration
   double tan_vel = 8;
   // 1 <= revolutions <= 20
-  unsigned long int revolutions = 20;
+  long_int_type revolutions = 20;
   /* END TEST PARAMETERS */
 
   Mandrel.set_velocity(tan_vel);
@@ -69,7 +69,7 @@ int test_mandrel_steps_to_rotate_()
   Mandrel.clear_step_count();
   while (micros() < end_time)
   {
-    unsigned long int curr_usec = micros();
+    long_int_type curr_usec = micros();
     if ((curr_usec - Mandrel.get_last_step_time()) > Mandrel.get_usec_per_step())
     {
       Mandrel.set_last_step_time(curr_usec);
