@@ -5,7 +5,7 @@ A collection of code used to control the UVic Rocketry's Filament Winding Machin
 This software is designed to be run with either the [Arduino IDE](https://www.arduino.cc/en/main/software) or with [Arduino extension](https://marketplace.visualstudio.com/items?itemName=vsciot-vscode.vscode-arduino) for [Visual Studio Code](https://code.visualstudio.com/). Note the Arduino IDE must be installed to use the Arduino extension for VS Code. It is recommended for non-developers that the software be run with the Arduino IDE as further configurations are required to develop in VS Code as described [here](https://medium.com/home-wireless/use-visual-studio-code-for-arduino-2d0cf4c1760b).
 
 ## Controller Requirements
- - Arduino compatible microcontroller (Arudino Mega 2560 is used)
+ - Arduino compatible microcontroller (Arudino Mega 2560 recommended)
  - At least 8MHz clock speed
  - At least 6 digital I/O pins
 
