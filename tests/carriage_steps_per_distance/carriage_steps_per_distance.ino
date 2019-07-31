@@ -55,7 +55,7 @@ typedef config::long_int_type long_int_type;
 int test_carriage_steps_per_distance_()
 {
   Serial.begin(115200);
-  Carriage Carriage;
+  Carriage Carriage(config::carriage_step_pin, config::carriage_dir_pin);
 
   /* START TEST PARAMETERS */
   // Choose values that satisfy carriage velocity equation as given in config.h

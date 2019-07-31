@@ -9,7 +9,7 @@ int main_()
 {
   Serial.begin(115200);
 
-  Carriage Carriage;
+  Carriage Carriage(config::carriage_step_pin, config::carriage_dir_pin);
   Mandrel Mandrel;
 
   Switch C_Home_Switch(config::c_home_switch_pin);
@@ -20,7 +20,6 @@ int main_()
 
   /*---------------------------------------------------------------------------
                           <Home Carriage and Mandrel>
-
   Precondition: Carriage direction is initialized such that carriage moves
                 toward C_Home_Switch.
   
@@ -71,7 +70,6 @@ int main_()
 
   /*---------------------------------------------------------------------------
                   <Find and Set Minimum Wait Time on Far End>
-
   Calibration sub-routine to find minimal wait time at far end such that the home
   end has a wait time greater than the minimal wait time. Algorithm performs a 
   single wrap cycle using user defined wrap parameters to determine the step count
@@ -144,7 +142,6 @@ int main_()
 
   /*---------------------------------------------------------------------------
                     <2 Axis Filament Wind for User Defined Passes>
-
   Main routine which performs a 2 axis filament wind at users specifications defined
   in Config.h under CALIBRATIONS FOR USER.
   ---------------------------------------------------------------------------*/
