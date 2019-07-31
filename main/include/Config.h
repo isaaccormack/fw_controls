@@ -50,9 +50,16 @@ constexpr int_type passes_per_layer = (double)1 + (TWO_PI * mandrel_radius /
 constexpr int_type c_far_switch_pin = 13;
 constexpr int_type c_home_switch_pin = 12;
 constexpr int_type m_encoder_switch_pin = 11;
+constexpr int_type rotator_switch_pin = 10;
+constexpr int_type r_home_switch_pin = 9;
+constexpr int_type r_far_switch_pin = 8;
 constexpr int_type carriage_step_pin = 7;
 constexpr int_type carriage_dir_pin = 6;
 constexpr int_type mandrel_step_pin = 5;
+constexpr int_type radial_dir_pin = 2;
+constexpr int_type radial_step_pin = 14;
+constexpr int_type rotator_dir_pin = 4;
+constexpr int_type rotator_step_pin = 3;
 } // namespace config
 
 #endif
