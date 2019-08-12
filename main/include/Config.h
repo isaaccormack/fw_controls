@@ -12,30 +12,31 @@ constexpr double mandrel_homing_velocity = 5;   // in/s
 constexpr double rotator_homing_velocity = 0.4; // rev/s
 constexpr int_type rotator_steps_to_home = 103; // steps
 
-/* CALIBRATIONS FOR USER                                                     */
-constexpr double deg_wrap_angle = 55;            // Carriage velocity must be recalibrated for values in [51, 60)
-constexpr double mandrel_radius = 2.24806;       // in
-constexpr double filament_width = 1.0;           // in
-constexpr double filament_percent_overlap = 0.0; // % in range [0, 1]
-constexpr int_type total_layers = 4;             // 1 layer is 2 physical layers due to nature of winding
-
-/* CALIBRATIONS FOR DEVELOPER                                                */
-/* Define inverse relation such that mandrel velocity remains relatively stable over different wrap angles.
-   Gain, ie. numerator of expression ranges from 98 @ 20 deg to 152 @ 80 deg. K must be tuned to avoid resonant
-   frequency of the mandrel motor s.t. if deg_wrap_angle > 51 && deg_wrap_angle < 60 then k = 50 else k = 80 */
-constexpr int_type k = 50;
-constexpr double carriage_velocity = (k + (9 * deg_wrap_angle / 10)) / deg_wrap_angle; // in/s
-
-// rotator_rev_per_sec calibrated to satify 0.1 rev/s @ 80 deg and 0.8 rev/s @ 10deg as currently required
-constexpr double rotator_rev_per_sec = 8 / deg_wrap_angle; // rev/s
-constexpr double wrap_angle = deg_wrap_angle * PI / 180.0; // rad
-
 /* CONSTANTS                                                                 */
 constexpr int_type steps_per_rev = 200;            // step/rev
 constexpr int_type mandrel_steps_per_rev = 850;    // step/rev
 constexpr double carriage_pulley_pitch = 0.195;    // in/step
 constexpr int_type carriage_num_pulley_teeth = 12; // teeth/rev
 constexpr double rotator_steps_per_deg = 1.1111;   // steps/deg
+
+/* CALIBRATIONS FOR USER                                                     */
+constexpr double deg_wrap_angle = 72;            // Carriage velocity must be recalibrated for values in (51, 60)
+constexpr double mandrel_radius = 2.24806;       // in
+constexpr double filament_width = 1.0;           // in
+constexpr double filament_percent_overlap = 0.0; // % in range [0, 1]
+constexpr int_type total_layers = 100;           // 1 layer is 2 physical layers due to nature of winding
+
+/* CALIBRATIONS FOR DEVELOPER                                                */
+/* - Define inverse relation such that mandrel velocity remains relatively stable over different wrap angles.
+   - Gain, ie. numerator of expression ranges from 98 @ 20 deg to 152 @ 80 deg. 
+   - K must be tuned to avoid resonant frequency of the mandrel motor s.t. if deg_wrap_angle > 51 &&
+     deg_wrap_angle < 60 then k = 50 else k = 80 */
+constexpr int_type k = 80;
+constexpr double carriage_velocity = (k + (9 * deg_wrap_angle / 10)) / deg_wrap_angle;    // in/s
+constexpr double rotator_rev_per_sec = 8 / deg_wrap_angle;                                // rev/s, calibrated such that 0.1 rev/s @ 80 deg and 0.8 rev/s @ 10deg
+constexpr double wrap_angle = deg_wrap_angle * PI / 180.0;                                // rad
+constexpr int_type mandrel_step_count_at_start_of_first_pass = mandrel_steps_per_rev / 2; // Find min wait time on far end calibration algorithm assumes this initial value
+constexpr int_type min_wait_steps = 3 * deg_wrap_angle;                                   // Mandrel speed increases with wrap angle => increase wait steps
 
 /* PRIVATE CONSTANTS                                                         */
 namespace
