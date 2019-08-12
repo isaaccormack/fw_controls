@@ -25,20 +25,20 @@ public:
   void set_step_count_at_far_dir_flip() { step_count_at_far_dir_flip_ = step_count_; }
   int_type get_step_count_at_far_dir_flip() { return step_count_at_far_dir_flip_; }
 
+  void set_step_count_at_start_of_pass_by_layer(const int_type &num_layers)
+  {
+    step_count_at_start_of_pass_ = (config::mandrel_step_count_at_start_of_first_pass +
+                                    (num_layers * config::pass_offset_steps) / 2) %
+                                   config::mandrel_steps_per_rev;
+  }
   void inc_step_count_at_start_of_pass()
   {
     step_count_at_start_of_pass_ += config::pass_offset_steps;
     if (step_count_at_start_of_pass_ >= config::mandrel_steps_per_rev)
     {
       // step_count_at_start_of_pass_ exists in range [0, 849]
-      step_count_at_start_of_pass_ -= config::mandrel_steps_per_rev;
+      step_count_at_start_of_pass_ = step_count_at_start_of_pass_ % config::mandrel_steps_per_rev;
     }
-  }
-
-  void set_step_count_at_start_of_pass_even() { step_count_at_start_of_pass_ = config::mandrel_steps_per_rev / 2; }
-  void set_step_count_at_start_of_pass_odd()
-  {
-    step_count_at_start_of_pass_ = (config::mandrel_steps_per_rev / 2) + (config::pass_offset_steps / 2);
   }
   int_type get_step_count_at_start_of_pass() const { return step_count_at_start_of_pass_; }
 
@@ -50,8 +50,8 @@ private:
   int_type backup_step_count_ = 0;
   int_type step_count_at_far_dir_flip_ = 0;
 
-  int_type step_count_at_start_of_pass_ = config::mandrel_steps_per_rev / 2; // DO NOT TOUCH - configuration algorithm assumes initial value
-  int_type far_end_wait_steps_ = 3 * config::deg_wrap_angle;                 // Mandrel speed increases with wrap angle => increase wait steps
+  int_type step_count_at_start_of_pass_ = config::mandrel_step_count_at_start_of_first_pass;
+  int_type far_end_wait_steps_ = config::min_wait_steps;
 
   constexpr static long_int_type scaled_inch_per_step_ = (1000000 * TWO_PI * config::mandrel_radius) /
                                                          config::mandrel_steps_per_rev;
