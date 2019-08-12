@@ -36,8 +36,6 @@ int main_()
   Mandrel.set_velocity(config::mandrel_homing_velocity);
   Rotator.set_rev_per_sec(config::rotator_homing_velocity);
 
-  // Could make these happen simultaneously
-
   /* Home Carriage */
   while (!C_Home_Switch.is_rising_edge())
   {
@@ -97,21 +95,21 @@ int main_()
   Rotator.clear_step_count();
   Rotator.flip_dir();
 
-  // update this below to describe how it is integrated as first pass of wind
   /*---------------------------------------------------------------------------
                   <Find and Set Minimum Wait Time on Far End>
-  Calibration sub-routine to find minimal wait time at far end such that the home
-  end has a wait time greater than the minimal wait time. Algorithm performs a 
-  single wrap cycle using user defined wrap parameters to determine the step count
-  of the mandrel when home is finally reached. From this, wait time on far end is
-  increased, if necessary, such that wait time on home end is at least the
-  minumum allowable value. Wait time on ends necessary to reduce wear on machine
-  and possible slippage of timing belt pulleys of motor shaft that may occur
-  during an immediate direction flip of the carriage due to its momentum.
+  Calibration sub-routine to find minimal wait steps at the far end such that
+  there are greater than config::min_wait_steps between the time the carriage
+  arrives at the home end and it is scheduled to start the next pass. Specifically
+  this is done by completing the first pass of the wind and checking if the 
+  difference between the mandrel steps at start of next pass and mandrel steps
+  completed when the carriage arrived at home position is less than config::min_wait_steps,
+  or if the carriage arrived only a few steps after it is scheduled to leave. In
+  either case, the wait steps on the far end is incremented such that this will
+  not be the case for successive passes on this layer and the carriage performs
+  an extra revolution to provide adequate delay. It should be noted that at least
+  the minimal wait time on each end is necessary so that the filament can settle 
+  before the next pass begins.
   ---------------------------------------------------------------------------*/
-
-  // Serial.print(Mandrel.get_far_end_wait_steps());
-  // Serial.print(" <- Initial far end wait steps\n");
 
   Carriage.set_velocity(config::carriage_velocity);
 
@@ -195,66 +193,37 @@ int main_()
   Rotator.flip_dir();
   Rotator.enable();
 
-  // need to put this above serial print
-  // Embed calibration pass as first pass of wind by incrementing step count at start of next pass and delaying accordingly if necessary
+  // Calibration pass is really first pass of wind
   Mandrel.inc_step_count_at_start_of_pass();
-
-  Serial.print("\nInitially\n");
-  Serial.print(config::min_wait_steps);
-  Serial.print(" <- min wait steps\n");
-  Serial.print(Mandrel.get_step_count());
-  Serial.print(" <- Initial steps when arriving at home\n");
-  Serial.print(Mandrel.get_step_count_at_start_of_pass());
-  Serial.print(" <- Steps when leaving home on next pass\n");
-
-  // int_type start_of_next_pass_steps = (Mandrel.get_step_count_at_start_of_pass() + config::pass_offset_steps) % config::mandrel_steps_per_rev;
 
   if (util::too_few_wait_steps_on_home_side(Mandrel.get_step_count(), Mandrel.get_step_count_at_start_of_pass()))
   {
-    Serial.print(" <- Initially im in too few wait steps!\n");
     Mandrel.add_to_far_end_wait_steps(Mandrel.get_far_end_wait_steps() + 20);
-    util::delay_for_mandrel_rev(Mandrel, Rotator, M_Encoder_Switch);
+    util::delay_for_mandrel_revolution(Mandrel, Rotator, M_Encoder_Switch);
   }
 
-  Serial.print(Mandrel.get_far_end_wait_steps());
-  Serial.print(" <- Adjusted far end wait steps\n");
-
   /*---------------------------------------------------------------------------
-                    <2 Axis Filament Wind for User Defined Passes>
-  Main routine which performs a 2 axis filament wind at users specifications defined
-  in Config.h under CALIBRATIONS FOR USER.
+                    <3 Axis Filament Wind for User Defined Passes>
+  Main routine which performs a 3 axis filament wind at users specifications defined
+  in include/Config.h under CALIBRATIONS FOR USER. Given a user defined wrap angle,
+  the carriage and mandrel actuate at a predetermined constant velocity while the
+  applicator head rotates as necessary such that the filament is applied parallel
+  to the mandrel during a wind.
   ---------------------------------------------------------------------------*/
 
-  // // non-interruptive delay
-  // long_int_type delay_usec = 1000000; // us
-  // long_int_type start_usec = micros();
-  // while (micros() - start_usec < delay_usec)
-  // {
-  // }
-
-  int_type passes = 1; // by calibration pass
+  int_type passes = 1; // 1 since calibration pass
   int_type layers = 0;
   while (layers < config::total_layers)
   {
     if (passes == config::passes_per_layer)
     {
-      Serial.print("\nNext layer!\n");
-
       passes = 0;
       ++layers;
       Mandrel.set_step_count_at_start_of_pass_by_layer(layers);
 
-      Serial.print(config::min_wait_steps);
-      Serial.print(" <- min wait steps\n");
-      Serial.print(Mandrel.get_step_count());
-      Serial.print(" <- Initial steps when arriving at home\n");
-      Serial.print(Mandrel.get_step_count_at_start_of_pass());
-      Serial.print(" <- Steps when leaving home on next pass\n");
-
       if (util::too_few_wait_steps_on_home_side(Mandrel.get_step_count(), Mandrel.get_step_count_at_start_of_pass()))
       {
-        Serial.print(" <- Im in too few wait steps on new layer!\n");
-        util::delay_for_mandrel_rev(Mandrel, Rotator, M_Encoder_Switch);
+        util::delay_for_mandrel_revolution(Mandrel, Rotator, M_Encoder_Switch);
       }
     }
 
@@ -320,9 +289,6 @@ int main_()
 
     if (C_Home_Switch.is_rising_edge())
     {
-      // Serial.print(Mandrel.get_step_count_at_start_of_pass());
-      // Serial.print(" <- Before incremenet steps when leaving home home\n");
-
       Mandrel.inc_step_count_at_start_of_pass();
       Carriage.flip_dir();
       Carriage.set_home_dir_flip_flag();
@@ -330,11 +296,6 @@ int main_()
       Rotator.enable();
 
       ++passes;
-
-      // Serial.print(Mandrel.get_step_count());
-      // Serial.print(" <- Steps when arriving at home\n");
-      // Serial.print(Mandrel.get_step_count_at_start_of_pass());
-      // Serial.print(" <- Supposed steps when leaving home home\n");
     }
 
     if (M_Encoder_Switch.is_rising_edge())
