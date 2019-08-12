@@ -117,6 +117,8 @@ int main_()
   double mandrel_velocity = config::carriage_velocity * tan(config::wrap_angle);
   Mandrel.set_velocity(mandrel_velocity);
 
+  Rotator.set_rev_per_sec(config::rotator_rev_per_sec);
+
   while (!C_Home_Switch.is_rising_edge())
   {
     long_int_type curr_usec = micros();
