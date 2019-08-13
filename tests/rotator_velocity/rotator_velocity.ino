@@ -40,16 +40,16 @@ int test_rotator_velocity_()
   Rotator Rotator;
 
   /* START TEST PARAMETERS */
-  // 3.5 <= tan_vel <= 10 in/s -- for > 10in/s, results are comprimised by slippage of motor due to fast acceleration
+  // 0.1 <= rev_per_sec <= 1.0 rev/s
   const float rev_per_sec = 0.7f;
   // 1 <= revolutions <= 10
   const long_int_type revolutions = 10;
   /* END TEST PARAMETERS */
 
+  Rotator.set_rev_per_sec(rev_per_sec);
+
   // Set test time to time required to do the number of defined revolutions
   const long_int_type test_time = (1000000 * revolutions) / rev_per_sec;
-
-  Rotator.set_rev_per_sec(rev_per_sec);
 
   const long_int_type start_time = micros();
   const long_int_type end_time = test_time + start_time;
