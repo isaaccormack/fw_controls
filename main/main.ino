@@ -2,7 +2,7 @@
 #include "include/Mandrel.h"
 #include "include/Rotator.h"
 #include "include/Switch.h"
-#include "include/Util.h"
+#include "include/Util.cpp"
 
 typedef config::int_type int_type;
 typedef config::long_int_type long_int_type;
