@@ -24,8 +24,9 @@
     occured (ie. current velocity very close to target velocity).
 
   Test Parametes:
-    - config::carriage_accel_dist
-    - config::carriage_velocity (must manually override algorithmically derived value to desired test value)
+    - config::carriage_accel_dist for each x in [0.5, 1, 2, 3, 4, 5, 6]
+    - config::carriage_velocity in range [d, min(8 + 2 * config::carriage_accel_dist, 18)]
+    Note that config::carriage_velocity in Config.h must be manually overriden from the algorithmically derived value
 
   Units Under Test:
     - Carriage::init_usec_per_step_ (Private compile-time constant)
@@ -36,10 +37,8 @@
               of the acceleration profile, this assumption is valid. 
 
   Procedure:
-    1. For most config::carriage_accel_dist in [0.5, 1, 2, 3, 4, 5, 6] and using 
-       config::carriage_velocity = min(8 + 2 * config::carriage_accel_dist, 18) as a guide for max values and 
-       config::carriage_velocity = 1 as a min value, run the below code for a comprehensive set of pairs of the
-       aforementioned values until confidence in acceleration is achieved. 
+    1. Ensure the acceleration of the carriage is calibrated for each pair of test parameter values
+    2. Using a comprehensive set of pairs test parameters, run the below code
        
   Expected Results:
     For each pair of values tested:
@@ -49,7 +48,7 @@
 
   Remedial Action on Test Fail: This test may fail if the acceleration algorithm is changed and undesired non-linearites
     in the acceleration profile arise. As linear acceleration is expected for the control algorithm, it would be
-    beneficial to ensure the carriage is infact accelerating linearly. To do this, add the following to the
+    beneficial to ensure the carriage is in fact accelerating linearly. To do this, add the following to the
     Carriage.set_next_usec_per_step_accel() method after the logic:
       Serial.print("\n");
       Serial.print(d_next_usec_per_step);
