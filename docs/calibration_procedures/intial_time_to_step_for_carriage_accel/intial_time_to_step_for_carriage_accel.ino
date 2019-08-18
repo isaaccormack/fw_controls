@@ -2,11 +2,11 @@
 #include "/Users/i/Documents/Arduino/fw_controls/main/include/Carriage.h"
 #include "/Users/i/Documents/Arduino/fw_controls/main/include/Config.h"
 
-/* Calibration Procedure: Calibrate acceleration profile of carriage to ensure that correct velocity is 
-                          reached at end of profile.
+/* Calibration Procedure: Calibrate time between rest and first step in acceleration profile as to calibrate acceleration
+                          of carriage such that correct final velocity is reached at end of profile.
 
   Setup: Ensure that the arduino.json file in the .vscode folder is loading this test file 
-         by setting: "sketch": "docs/calibration_procedures/carriage_acceleration/carriage_acceleration.ino"
+         by setting: "sketch": "docs/calibration_procedures/initial_time_to_step_carriage_accel/initial_time_to_step_carriage_accel.ino"
 
   Unit Under Calibration: Carriage::init_usec_per_step_ (Private member variable)
 
@@ -18,7 +18,10 @@
               series, the length of the first step must be calibrated to yield an accurate carriage velocity at
               the end of the acceleration profile (there are no checks in place to ensure that carriage velocity
               is correct after acceleration takes place ie. machine assumed to be calibrated correctly [this is done
-              for efficiency]).
+              for efficiency]). More information about this algorithm can be found at:
+              https://www.embedded.com/design/mcus-processors-and-socs/4006438/Generate-stepper-motor-speed-profiles-in-real-time
+              Specifically, equations 13 and 14 are used for acceleration and deceleration respectively.
+
 
   Procedure:
     1. Upload this .ino file to arduino
@@ -32,7 +35,7 @@
 typedef config::int_type int_type;
 typedef config::long_int_type long_int_type;
 
-int calibrate_carriage_acceleration_()
+int calibrate_initial_time_to_step_carriage_accel()
 {
   Serial.begin(115200);
   Carriage Carriage(config::carriage_step_pin, config::carriage_dir_pin);
@@ -64,6 +67,6 @@ int calibrate_carriage_acceleration_()
   return 0;
 }
 
-void setup() { calibrate_carriage_acceleration_(); }
+void setup() { calibrate_initial_time_to_step_carriage_accel(); }
 
 void loop() {}
