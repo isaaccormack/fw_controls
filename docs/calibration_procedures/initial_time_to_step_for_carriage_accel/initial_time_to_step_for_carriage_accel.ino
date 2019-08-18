@@ -8,7 +8,7 @@
   Setup: Ensure that the arduino.json file in the .vscode folder is loading this test file 
          by setting: "sketch": "docs/calibration_procedures/initial_time_to_step_carriage_accel/initial_time_to_step_carriage_accel.ino"
 
-  Unit Under Calibration: Carriage::init_usec_per_step_ (Private member variable)
+  Unit Under Calibration: Carriage::init_usec_per_step_ (Private compile-time constant)
 
   Background: The acceleration algorithm relies on a 3rd order taylor series approximation to lower its
               computational complexity. Specifically, additions and subtractions can be performed to change velocity
