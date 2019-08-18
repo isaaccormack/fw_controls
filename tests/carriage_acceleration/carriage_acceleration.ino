@@ -16,6 +16,13 @@
   Setup: Ensure that the arduino.json file in the .vscode folder is loading this test file 
          by setting: "sketch": "tests/carriage_acceleration/carriage_acceleration.ino"
 
+  Test Description: Initially position the carriage config::carriage_accel_steps away from the limit switch.
+    Begin acceleration of carriage and assert that the limit switch will be hit approximately at the same
+    time as acceleration is complete such that the current number of steps the carriage has traveled is
+    very close to config::carriage_accel_steps and Carriage.get_usec_per_step() is very close to the value of
+    Carriage.get_usec_per_step() that would exist if Carriage.set_velocity(config::carriage_velocity) had
+    occured (ie. current velocity very close to target velocity).
+
   Test Parametes:
     - config::carriage_accel_dist
     - config::carriage_velocity (must manually override algorithmically derived value to desired test value)
