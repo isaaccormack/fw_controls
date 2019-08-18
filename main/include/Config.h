@@ -7,7 +7,7 @@ typedef unsigned int int_type;
 typedef unsigned long int long_int_type;
 
 /* HOMING CALIBRATIONS                                                       */
-constexpr double carriage_homing_velocity = 2;  // in/s
+constexpr double carriage_homing_velocity = 1;  // in/s
 constexpr double mandrel_homing_velocity = 5;   // in/s
 constexpr double rotator_homing_velocity = 0.4; // rev/s
 constexpr int_type rotator_steps_to_home = 103; // steps
@@ -25,6 +25,7 @@ constexpr double mandrel_radius = 2.24806;       // in
 constexpr double filament_width = 1.0;           // in
 constexpr double filament_percent_overlap = 0.0; // % in range [0, 1]
 constexpr int_type total_layers = 100;           // 1 layer is 2 physical layers due to nature of winding
+constexpr double carriage_accel_dist = 1.0;      // in
 
 /* CALIBRATIONS FOR DEVELOPER                                                */
 /* - Define inverse relation such that mandrel velocity remains relatively stable over different wrap angles.
@@ -32,7 +33,8 @@ constexpr int_type total_layers = 100;           // 1 layer is 2 physical layers
    - K must be tuned to avoid resonant frequency of the mandrel motor s.t. if deg_wrap_angle > 51 &&
      deg_wrap_angle < 60 then k = 50 else k = 80 */
 constexpr int_type k = 80;
-constexpr double carriage_velocity = (k + (9 * deg_wrap_angle / 10)) / deg_wrap_angle;    // in/s
+constexpr double carriage_velocity = (k + (9 * deg_wrap_angle / 10)) / deg_wrap_angle; // in/s
+// constexpr double carriage_velocity = 15.0;   // for testing                            // in/s
 constexpr double rotator_rev_per_sec = 8 / deg_wrap_angle;                                // rev/s, calibrated such that 0.1 rev/s @ 80 deg and 0.8 rev/s @ 10deg
 constexpr double wrap_angle = deg_wrap_angle * PI / 180.0;                                // rad
 constexpr int_type mandrel_step_count_at_start_of_first_pass = mandrel_steps_per_rev / 2; // Find min wait time on far end calibration algorithm assumes this initial value
@@ -51,6 +53,10 @@ constexpr int_type pass_offset_steps = (double)eff_pass_offset_length * mandrel_
 constexpr int_type passes_per_layer = (double)1 + (TWO_PI * mandrel_radius /
                                                    eff_pass_offset_length);
 constexpr int_type rotator_steps_for_wrap_angle = (double)(90 - deg_wrap_angle) * rotator_steps_per_deg;
+constexpr int_type carriage_accel_steps = (double)carriage_accel_dist * steps_per_rev / (carriage_pulley_pitch * carriage_num_pulley_teeth);
+
+// acceleration is sanity check which is used to set v max given d if necessary
+constexpr double carriage_accel = steps_per_rev * sq(carriage_velocity) / (2 * carriage_accel_steps * carriage_pulley_pitch * carriage_num_pulley_teeth);
 
 /* I/O PINS                                                                  */
 constexpr int_type c_far_switch_pin = 13;
