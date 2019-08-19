@@ -119,14 +119,16 @@ int main_()
   before the next pass begins.
   ---------------------------------------------------------------------------*/
 
-  /* Vm,tan / Vc = tan(wrap_angle)     =>     Vm,tan = Vc * tan(wrap_angle) */
-  double mandrel_velocity = config::carriage_velocity * tan(config::wrap_angle);
-  Mandrel.set_velocity(mandrel_velocity);
-
+  config::set_max_operating_speeds(); // Must call
+  Carriage.set_init_usec_per_step();
   Rotator.set_rev_per_sec(config::rotator_rev_per_sec);
+  Mandrel.set_velocity(config::mandrel_velocity);
 
-  Serial.print("c0 is: ");
-  Serial.print(Carriage.get_init_usec_per_step());
+  Serial.print("Carriage velocity: ");
+  Serial.print(config::carriage_velocity);
+  Serial.print("\n");
+  Serial.print("Mandrel velocity: ");
+  Serial.print(config::mandrel_velocity);
   Serial.print("\n");
 
   while (!Carriage.is_at_home_end() || Carriage.is_decelerating())

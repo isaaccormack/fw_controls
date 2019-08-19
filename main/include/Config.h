@@ -1,6 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <math.h>
+
 namespace config
 {
 typedef unsigned int int_type;
@@ -20,25 +22,24 @@ constexpr int_type carriage_num_pulley_teeth = 12; // teeth/rev
 constexpr double rotator_steps_per_deg = 1.1111;   // steps/deg
 
 /* CALIBRATIONS FOR USER                                                     */
-constexpr double deg_wrap_angle = 72;            // Carriage velocity must be recalibrated for values in (51, 60)
+constexpr double deg_wrap_angle = 5.0;           // Carriage velocity must be recalibrated for values in (51, 60)
 constexpr double mandrel_radius = 2.24806;       // in
 constexpr double filament_width = 1.0;           // in
 constexpr double filament_percent_overlap = 0.0; // % in range [0, 1]
 constexpr int_type total_layers = 100;           // 1 layer is 2 physical layers due to nature of winding
-constexpr double carriage_accel_dist = 1.0;      // in
+constexpr double carriage_accel_dist = 3.0;      // in
 
 /* CALIBRATIONS FOR DEVELOPER                                                */
-/* - Define inverse relation such that mandrel velocity remains relatively stable over different wrap angles.
-   - Gain, ie. numerator of expression ranges from 98 @ 20 deg to 152 @ 80 deg. 
-   - K must be tuned to avoid resonant frequency of the mandrel motor s.t. if deg_wrap_angle > 51 &&
-     deg_wrap_angle < 60 then k = 50 else k = 80 */
-constexpr int_type k = 80;
-constexpr double carriage_velocity = (k + (9 * deg_wrap_angle / 10)) / deg_wrap_angle; // in/s
-// constexpr double carriage_velocity = 15.0;   // for testing                            // in/s
-constexpr double rotator_rev_per_sec = 8 / deg_wrap_angle;                                // rev/s, calibrated such that 0.1 rev/s @ 80 deg and 0.8 rev/s @ 10deg
+constexpr double derived_carriage_velocity = 8.0 + 2.0 * carriage_accel_dist;             // in/s
+constexpr double max_carriage_velocity = 18.0;                                            // in/s
+constexpr double max_mandrel_rev_per_sec = 1.0;                                           // rev/s
+constexpr double mandrel_min_resonant_rev_per_sec = 0.21;                                 // rev/s
+constexpr double mandrel_max_resonant_rev_per_sec = 0.3;                                  // rev/s
 constexpr double wrap_angle = deg_wrap_angle * PI / 180.0;                                // rad
 constexpr int_type mandrel_step_count_at_start_of_first_pass = mandrel_steps_per_rev / 2; // Find min wait time on far end calibration algorithm assumes this initial value
-constexpr int_type min_wait_steps = 3 * deg_wrap_angle;                                   // Mandrel speed increases with wrap angle => increase wait steps
+// constexpr int_type min_wait_steps = 3 * deg_wrap_angle;                                   // Mandrel speed increases with wrap angle => increase wait steps
+// changing for faster profile
+constexpr int_type min_wait_steps = 350; // Mandrel speed increases with wrap angle => increase wait steps
 
 /* PRIVATE CONSTANTS                                                         */
 namespace
@@ -50,13 +51,10 @@ constexpr double eff_pass_offset_length = pass_offset_length * (1.0 - filament_p
 /* DERIVED CONSTANTS                                                         */
 constexpr int_type pass_offset_steps = (double)eff_pass_offset_length * mandrel_steps_per_rev /
                                        (TWO_PI * mandrel_radius);
-constexpr int_type passes_per_layer = (double)1 + (TWO_PI * mandrel_radius /
-                                                   eff_pass_offset_length);
+constexpr int_type passes_per_layer = (double)1 + (TWO_PI * mandrel_radius / eff_pass_offset_length);
 constexpr int_type rotator_steps_for_wrap_angle = (double)(90 - deg_wrap_angle) * rotator_steps_per_deg;
-constexpr int_type carriage_accel_steps = (double)carriage_accel_dist * steps_per_rev / (carriage_pulley_pitch * carriage_num_pulley_teeth);
-
-// acceleration is sanity check which is used to set v max given d if necessary
-constexpr double carriage_accel = steps_per_rev * sq(carriage_velocity) / (2 * carriage_accel_steps * carriage_pulley_pitch * carriage_num_pulley_teeth);
+constexpr int_type carriage_accel_steps = (double)carriage_accel_dist * steps_per_rev /
+                                          (carriage_pulley_pitch * carriage_num_pulley_teeth);
 
 /* I/O PINS                                                                  */
 constexpr int_type c_far_switch_pin = 13;
@@ -72,6 +70,71 @@ constexpr int_type radial_dir_pin = 2;
 constexpr int_type radial_step_pin = 14;
 constexpr int_type rotator_dir_pin = 4;
 constexpr int_type rotator_step_pin = 3;
+
+/* DYNAMIC CALIBRATION ROUTINE                                                 */
+double carriage_velocity = max_carriage_velocity;
+double mandrel_velocity = TWO_PI * mandrel_radius * max_mandrel_rev_per_sec;
+double rotator_rev_per_sec; // Make variable public
+void set_max_operating_speeds()
+{
+  if (derived_carriage_velocity < max_carriage_velocity)
+  {
+    carriage_velocity = derived_carriage_velocity;
+  }
+
+  double critical_wrap_angle = atan2f(mandrel_velocity, carriage_velocity);
+
+  Serial.print("\nWrap angle: ");
+  Serial.print(config::deg_wrap_angle);
+  Serial.print("\n");
+  Serial.print("Wrap angle radians: ");
+  Serial.print(config::wrap_angle);
+  Serial.print("\n");
+  Serial.print("Max carriage velocity: ");
+  Serial.print(carriage_velocity);
+  Serial.print("\n");
+  Serial.print("Max mandrel velocity: ");
+  Serial.print(mandrel_velocity);
+  Serial.print("\n");
+  Serial.print("Critical wrap angle: ");
+  Serial.print(critical_wrap_angle);
+  Serial.print("\n");
+
+  if (wrap_angle > critical_wrap_angle) // Then bounded by max mandrel rev per sec
+  {
+    carriage_velocity = mandrel_velocity / tan(wrap_angle);
+  }
+  else // Bounded by max carriage velocity
+  {
+    mandrel_velocity = carriage_velocity * tan(wrap_angle);
+  }
+
+  Serial.print("Adjusted carriage velocity: ");
+  Serial.print(carriage_velocity);
+  Serial.print("\n");
+  Serial.print("Adjusted mandrel velocity: ");
+  Serial.print(mandrel_velocity);
+  Serial.print("\n");
+
+  double min_resonant_velocity = TWO_PI * mandrel_radius * mandrel_min_resonant_rev_per_sec;
+  double max_resonant_velocity = TWO_PI * mandrel_radius * mandrel_max_resonant_rev_per_sec;
+
+  Serial.print("Min resonant mandrel velocity: ");
+  Serial.print(min_resonant_velocity);
+  Serial.print("\n");
+  Serial.print("Max resonant mandrel velocity: ");
+  Serial.print(max_resonant_velocity);
+  Serial.print("\n");
+
+  if (mandrel_velocity > min_resonant_velocity && mandrel_velocity < max_resonant_velocity)
+  {
+    mandrel_velocity = min_resonant_velocity;
+    carriage_velocity = mandrel_velocity / tan(wrap_angle);
+  }
+
+  rotator_rev_per_sec = carriage_velocity * (90.0 - deg_wrap_angle) / (2.0 * carriage_accel_dist * 360); // rev/s
+}
+
 } // namespace config
 
 #endif

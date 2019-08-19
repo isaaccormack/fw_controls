@@ -36,7 +36,6 @@ public:
     if (accel_steps_ == config::carriage_accel_steps)
     {
       is_accelerating_ = false;
-      Serial.print("accel finished!\n");
     }
   }
   void set_next_usec_per_step_decel()
@@ -54,7 +53,6 @@ public:
     if (accel_steps_ == 0)
     {
       is_decelerating_ = false;
-      Serial.print("decel finished!\n");
     }
   }
 
@@ -76,6 +74,10 @@ public:
 
   // for testing
   double get_init_usec_per_step() { return init_usec_per_step_; }
+  void set_init_usec_per_step()
+  {
+    init_usec_per_step_ = (double)0.957 * 1000000 * sqrt(config::carriage_accel_dist * config::carriage_pulley_pitch * config::carriage_num_pulley_teeth / (100.0 * sq(config::carriage_velocity)));
+  }
 
 private:
   bool home_dir_flip_flag_ = false;
@@ -97,10 +99,10 @@ private:
   // Use manual calibration procedure to calibrate Cerr as automatic algorithm very complex for compile time
   // Or could, use auxilary program in UI to calculate this
   // To calibrate, calculate the number of steps necessary to reach distance, take the floor of this, change Cerr until expected value occurs at exp num steps
-  constexpr static double init_usec_per_step_ = (double)0.957 * 1000000 * sqrt(config::carriage_accel_dist * config::carriage_pulley_pitch * config::carriage_num_pulley_teeth / (100.0 * sq(config::carriage_velocity)));
+  double init_usec_per_step_;
 };
 
 const config::long_int_type Carriage::scaled_inch_per_step_;
-const double Carriage::init_usec_per_step_;
+// const double Carriage::init_usec_per_step_;
 
 #endif
