@@ -11,14 +11,14 @@ int main_()
 {
   Serial.begin(115200);
 
-  Carriage Carriage(config::carriage_step_pin, config::carriage_dir_pin);
+  Carriage Carriage(config::c_step_pin, config::c_dir_pin);
   Mandrel Mandrel;
   Rotator Rotator;
 
   Switch C_Home_Switch(config::c_home_switch_pin);
   Switch C_Far_Switch(config::c_far_switch_pin);
   Switch M_Encoder_Switch(config::m_encoder_switch_pin, HIGH);
-  Switch Rotator_Switch(config::rotator_switch_pin);
+  Switch Rotator_Switch(config::r_switch_pin);
 
   Switch *Carriage_Switches[2] = {&C_Home_Switch, &C_Far_Switch};
 
@@ -32,30 +32,13 @@ int main_()
   position.
   ---------------------------------------------------------------------------*/
 
-  Carriage.set_velocity(config::carriage_homing_velocity); // can change this to acceleration once tested
-  Mandrel.set_velocity(config::mandrel_homing_velocity);
-  Rotator.set_rev_per_sec(config::rotator_homing_velocity);
+  Carriage.set_velocity(config::c_homing_velocity); // can change this to acceleration once tested
+  Mandrel.set_velocity(config::m_homing_velocity);
+  Rotator.set_rev_per_sec(config::r_homing_velocity);
 
-  /* Home Carriage */
-  int_type step_count = 0;
-  bool home_switch_pressed = false;
-  while (!home_switch_pressed || step_count < config::carriage_accel_steps)
-  {
-    long_int_type curr_usec = micros();
-    if (curr_usec - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
-    {
-      Carriage.set_last_step_time(curr_usec);
-      Carriage.step();
-      ++step_count;
-    }
-    if (C_Home_Switch.is_rising_edge())
-    {
-      home_switch_pressed = true;
-      step_count = 0;
-    }
-  }
-  Carriage.flip_dir();
-  Carriage.set_home_dir_flip_flag();
+  Serial.print("Layers: ");
+  Serial.print(config::passes_per_layer);
+  Serial.print("\n");
 
   /* Home Mandrel */
   bool mandrel_step_count_flushed = false;
@@ -84,7 +67,7 @@ int main_()
 
   /* Home Rotator */
   bool rotator_switch_pressed = false;
-  while (Rotator.get_step_count() < config::rotator_steps_to_home || !rotator_switch_pressed)
+  while (Rotator.get_step_count() < config::r_steps_to_home || !rotator_switch_pressed)
   {
     if (Rotator_Switch.is_rising_edge())
     {
@@ -103,6 +86,30 @@ int main_()
   Rotator.clear_step_count();
   Rotator.flip_dir();
 
+  /* Required to home carriage the correct steps for acceleration profile */
+  util::setup_for_wind_(Mandrel, Carriage, Rotator);
+
+  /* Home Carriage */
+  int_type step_count = 0;
+  bool home_switch_pressed = false;
+  while (!home_switch_pressed || step_count < Carriage.get_total_accel_steps())
+  {
+    long_int_type curr_usec = micros();
+    if (curr_usec - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
+    {
+      Carriage.set_last_step_time(curr_usec);
+      Carriage.step();
+      ++step_count;
+    }
+    if (C_Home_Switch.is_rising_edge())
+    {
+      home_switch_pressed = true;
+      step_count = 0;
+    }
+  }
+  Carriage.flip_dir();
+  Carriage.set_home_dir_flip_flag();
+
   /*---------------------------------------------------------------------------
                   <Find and Set Minimum Wait Time on Far End>
   Calibration sub-routine to find minimal wait steps at the far end such that
@@ -118,18 +125,6 @@ int main_()
   the minimal wait time on each end is necessary so that the filament can settle 
   before the next pass begins.
   ---------------------------------------------------------------------------*/
-
-  config::set_max_operating_speeds(); // Must call
-  Carriage.set_init_usec_per_step();
-  Rotator.set_rev_per_sec(config::rotator_rev_per_sec);
-  Mandrel.set_velocity(config::mandrel_velocity);
-
-  Serial.print("Carriage velocity: ");
-  Serial.print(config::carriage_velocity);
-  Serial.print("\n");
-  Serial.print("Mandrel velocity: ");
-  Serial.print(config::mandrel_velocity);
-  Serial.print("\n");
 
   while (!Carriage.is_at_home_end() || Carriage.is_decelerating())
   {
@@ -155,11 +150,6 @@ int main_()
           Carriage.clear_far_dir_flip_flag();
 
           Rotator.enable();
-
-          Serial.print("Im starting accel at FAR end\n");
-          Serial.print("My usec per step is: (this is c0) ");
-          Serial.print(Carriage.get_usec_per_step());
-          Serial.print("\n");
         }
       }
       else if (Carriage.is_home_dir_flip_flag_set())
@@ -171,11 +161,6 @@ int main_()
           Carriage.clear_home_dir_flip_flag();
 
           Rotator.enable();
-
-          Serial.print("Im starting accel at HOME end\n");
-          Serial.print("My usec per step is: (this is c0) ");
-          Serial.print(Carriage.get_usec_per_step());
-          Serial.print("\n");
         }
       }
       else
@@ -195,40 +180,25 @@ int main_()
       }
     }
 
-    curr_usec = micros();
-    if (Rotator.is_enabled() && curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
-    {
-      Rotator.set_last_step_time(curr_usec);
-      Rotator.step();
-      Rotator.inc_step_count();
-
-      if (Rotator.get_step_count() > config::rotator_steps_for_wrap_angle)
-      {
-        Rotator.clear_step_count();
-        Rotator.disable();
-      }
-    }
+    // curr_usec = micros();
+    // if (Rotator.is_enabled() && curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
+    // {
+    //   Rotator.set_last_step_time(curr_usec);
+    //   Rotator.step();
+    //   Rotator.inc_step_count();
+    //   Rotator.check_rotation_finished();
+    // }
 
     if (C_Home_Switch.is_rising_edge())
     {
       Carriage.set_home_end_flag();
       Carriage.start_decelerating();
-
-      Serial.print("Im in c HOME switch rising edge\n");
-      Serial.print("My usec per step is: (this is vf) ");
-      Serial.print(Carriage.get_usec_per_step());
-      Serial.print("\n");
     }
 
     if (C_Far_Switch.is_rising_edge())
     {
       Carriage.set_far_end_flag();
       Carriage.start_decelerating();
-
-      Serial.print("Im in c FAR switch rising edge\n");
-      Serial.print("My usec per step is: (this is vf) ");
-      Serial.print(Carriage.get_usec_per_step());
-      Serial.print("\n");
     }
 
     if (Carriage.is_at_far_end() && !Carriage.is_decelerating())
@@ -241,8 +211,6 @@ int main_()
 
       Rotator.flip_dir();
       Rotator.enable();
-
-      Serial.print("Im at FAR end and not decelerating\n");
     }
 
     if (M_Encoder_Switch.is_rising_edge())
@@ -260,12 +228,12 @@ int main_()
   Rotator.flip_dir();
   Rotator.enable();
 
-  Serial.print("I'm done cal pass!\n");
-
   // Calibration pass is really first pass of wind
   Mandrel.inc_step_count_at_start_of_pass();
 
-  if (util::too_few_wait_steps_on_home_side(Mandrel.get_step_count(), Mandrel.get_step_count_at_start_of_pass()))
+  if (util::too_few_wait_steps_on_home_side(Mandrel.get_step_count(),
+                                            Mandrel.get_step_count_at_start_of_pass(),
+                                            Mandrel.get_far_end_wait_steps()))
   {
     Mandrel.add_to_far_end_wait_steps(Mandrel.get_far_end_wait_steps() + util::step_tolerance);
     util::delay_for_mandrel_revolution(Mandrel, Rotator, M_Encoder_Switch);
@@ -290,7 +258,9 @@ int main_()
       ++layers;
       Mandrel.set_step_count_at_start_of_pass_by_layer(layers);
 
-      if (util::too_few_wait_steps_on_home_side(Mandrel.get_step_count(), Mandrel.get_step_count_at_start_of_pass()))
+      if (util::too_few_wait_steps_on_home_side(Mandrel.get_step_count(),
+                                                Mandrel.get_step_count_at_start_of_pass(),
+                                                Mandrel.get_far_end_wait_steps()))
       {
         util::delay_for_mandrel_revolution(Mandrel, Rotator, M_Encoder_Switch);
       }
@@ -318,11 +288,6 @@ int main_()
           Carriage.clear_far_dir_flip_flag();
 
           Rotator.enable();
-
-          Serial.print("Im starting accel at FAR end\n");
-          Serial.print("My usec per step is: (this is c0) ");
-          Serial.print(Carriage.get_usec_per_step());
-          Serial.print("\n");
         }
       }
       else if (Carriage.is_home_dir_flip_flag_set())
@@ -333,11 +298,6 @@ int main_()
           Carriage.clear_home_dir_flip_flag();
 
           Rotator.enable();
-
-          Serial.print("Im starting accel at HOME end\n");
-          Serial.print("My usec per step is: (this is c0) ");
-          Serial.print(Carriage.get_usec_per_step());
-          Serial.print("\n");
         }
       }
       else
@@ -357,29 +317,19 @@ int main_()
       }
     }
 
-    curr_usec = micros();
-    if (Rotator.is_enabled() && curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
-    {
-      Rotator.set_last_step_time(curr_usec);
-      Rotator.step();
-      Rotator.inc_step_count();
-
-      if (Rotator.get_step_count() > config::rotator_steps_for_wrap_angle)
-      {
-        Rotator.clear_step_count();
-        Rotator.disable();
-      }
-    }
+    // curr_usec = micros();
+    // if (Rotator.is_enabled() && curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
+    // {
+    //   Rotator.set_last_step_time(curr_usec);
+    //   Rotator.step();
+    //   Rotator.inc_step_count();
+    //   Rotator.check_rotation_finished();
+    // }
 
     if (C_Home_Switch.is_rising_edge())
     {
       Carriage.set_home_end_flag();
       Carriage.start_decelerating();
-
-      Serial.print("Im in c HOME switch rising edge\n");
-      Serial.print("My usec per step is: (this is vf) ");
-      Serial.print(Carriage.get_usec_per_step());
-      Serial.print("\n");
     }
 
     if (Carriage.is_at_home_end() && !Carriage.is_decelerating())
@@ -394,19 +344,12 @@ int main_()
       Rotator.enable();
 
       ++passes;
-
-      Serial.print("Im at HOME end and not decelerating\n");
     }
 
     if (C_Far_Switch.is_rising_edge())
     {
       Carriage.set_far_end_flag();
       Carriage.start_decelerating();
-
-      Serial.print("Im in c FAR switch rising edge\n");
-      Serial.print("My usec per step is: (this is vf) ");
-      Serial.print(Carriage.get_usec_per_step());
-      Serial.print("\n");
     }
 
     if (Carriage.is_at_far_end() && !Carriage.is_decelerating())
@@ -419,8 +362,6 @@ int main_()
 
       Rotator.flip_dir();
       Rotator.enable();
-
-      Serial.print("Im at FAR end and not decelerating\n");
     }
 
     if (M_Encoder_Switch.is_rising_edge())

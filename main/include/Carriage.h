@@ -9,31 +9,38 @@ class Carriage : public Motor
 public:
   Carriage(const int_type &step_pin, const int_type &dir_pin) : Motor(step_pin, dir_pin) {}
 
-  void set_velocity(const float &velocity) { set_usec_per_step(scaled_inch_per_step_ / velocity); }
+  void set_velocity(const double &velocity)
+  {
+    set_usec_per_step(1000000 * config::c_pulley_pitch * config::c_num_pulley_teeth / (config::steps_per_rev * velocity));
+  }
 
-  bool is_accelerating() { return is_accelerating_; }
+  void set_init_usec_per_step_accel(const double &accel_dist, const double &velocity)
+  {
+    init_usec_per_step_accel_ = 0.957 * 1000000 * sqrt(accel_dist * config::c_pulley_pitch * config::c_num_pulley_teeth / (100 * sq(velocity)));
+  }
+
+  bool is_accelerating()
+  {
+    return is_accelerating_;
+  }
   bool is_decelerating() { return is_decelerating_; }
   void start_accelerating()
   {
     is_accelerating_ = true;
     accel_steps_ = 0;
-    d_next_usec_per_step = init_usec_per_step_;
-    set_usec_per_step((long_int_type)d_next_usec_per_step);
+    d_next_usec_per_step_ = init_usec_per_step_accel_;
+    set_usec_per_step((long_int_type)d_next_usec_per_step_);
   }
   void start_decelerating() { is_decelerating_ = true; }
   void set_next_usec_per_step_accel()
   {
     ++accel_steps_;
-    d_next_usec_per_step -= 2 * d_next_usec_per_step / (4 * accel_steps_ + 1);
-    set_usec_per_step((long_int_type)d_next_usec_per_step);
-    // Serial.print(accel_steps_);
-    // Serial.print(" ");
-    // Serial.print(d_next_usec_per_step);
-    // Serial.print(" <- from accel\n");
+    d_next_usec_per_step_ -= 2 * d_next_usec_per_step_ / (4 * accel_steps_ + 1);
+    set_usec_per_step((long_int_type)d_next_usec_per_step_);
   }
   void check_accel_finished()
   {
-    if (accel_steps_ == config::carriage_accel_steps)
+    if (accel_steps_ == total_accel_steps_)
     {
       is_accelerating_ = false;
     }
@@ -41,12 +48,8 @@ public:
   void set_next_usec_per_step_decel()
   {
     --accel_steps_;
-    d_next_usec_per_step += 2 * d_next_usec_per_step / (4 * accel_steps_ + 1);
-    set_usec_per_step((long_int_type)d_next_usec_per_step);
-    // Serial.print(accel_steps_);
-    // Serial.print(" ");
-    // Serial.print(d_next_usec_per_step);
-    // Serial.print(" <- from decel\n");
+    d_next_usec_per_step_ += 2 * d_next_usec_per_step_ / (4 * accel_steps_ + 1);
+    set_usec_per_step((long_int_type)d_next_usec_per_step_);
   }
   void check_decel_finished()
   {
@@ -55,6 +58,14 @@ public:
       is_decelerating_ = false;
     }
   }
+  void set_total_accel_steps(const double &accel_dist)
+  {
+    total_accel_steps_ = (double)accel_dist * config::steps_per_rev / (config::c_pulley_pitch * config::c_num_pulley_teeth);
+    Serial.print("total_accel_steps_: ");
+    Serial.print(total_accel_steps_);
+    Serial.print("\n");
+  }
+  int_type get_total_accel_steps() { return total_accel_steps_; }
 
   void set_home_dir_flip_flag() { home_dir_flip_flag_ = true; }
   void clear_home_dir_flip_flag() { home_dir_flip_flag_ = false; }
@@ -72,13 +83,6 @@ public:
   void clear_far_end_flag() { at_far_end_flag_ = false; }
   bool is_at_far_end() { return at_far_end_flag_; }
 
-  // for testing
-  double get_init_usec_per_step() { return init_usec_per_step_; }
-  void set_init_usec_per_step()
-  {
-    init_usec_per_step_ = (double)0.957 * 1000000 * sqrt(config::carriage_accel_dist * config::carriage_pulley_pitch * config::carriage_num_pulley_teeth / (100.0 * sq(config::carriage_velocity)));
-  }
-
 private:
   bool home_dir_flip_flag_ = false;
   bool far_dir_flip_flag_ = false;
@@ -87,22 +91,13 @@ private:
 
   bool is_accelerating_ = false;
   bool is_decelerating_ = false;
-  bool at_end_flag_ = false;
 
   int_type accel_steps_ = 0;
 
-  // keep track of usec per step with floating point precision to improve accuracy of accel / decel with little overhead
-  double d_next_usec_per_step = init_usec_per_step_;
-
-  constexpr static long_int_type scaled_inch_per_step_ = (double)(1000000 * config::carriage_pulley_pitch * config::carriage_num_pulley_teeth) / config::steps_per_rev;
-
-  // Use manual calibration procedure to calibrate Cerr as automatic algorithm very complex for compile time
-  // Or could, use auxilary program in UI to calculate this
-  // To calibrate, calculate the number of steps necessary to reach distance, take the floor of this, change Cerr until expected value occurs at exp num steps
-  double init_usec_per_step_;
+  // Defined dynamically per pass
+  int_type total_accel_steps_;
+  double init_usec_per_step_accel_;
+  double d_next_usec_per_step_;
 };
-
-const config::long_int_type Carriage::scaled_inch_per_step_;
-// const double Carriage::init_usec_per_step_;
 
 #endif
