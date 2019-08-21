@@ -20,11 +20,11 @@ constexpr int_type c_num_pulley_teeth = 12; // teeth/rev
 constexpr double r_steps_per_deg = 1.1111;  // steps/deg
 
 /* CALIBRATIONS FOR USER                                                     */
-constexpr double deg_wrap_angle = 30.0;          // defined on [30, 88.5] for 3 axis
+constexpr double deg_wrap_angle = 70.0;          // defined on [30, 88.5] for 3 axis
 constexpr double m_radius = 2.24806;             // in
-constexpr double filament_width = 0.25;          // in
+constexpr double filament_width = 0.125;         // in
 constexpr double filament_percent_overlap = 0.0; // % in range [0, 1]
-constexpr int_type total_layers = 100;           // 1 layer is 2 physical layers due to nature of winding
+constexpr int_type total_layers = 2;             // 1 layer is 2 physical layers due to nature of winding
 
 /* CALIBRATIONS FOR DEVELOPER                                                */
 constexpr double c_max_velocity = 18.0;             // in/s
@@ -42,9 +42,9 @@ constexpr double eff_pass_offset_length = pass_offset_length * (1.0 - filament_p
 } // namespace
 
 /* DERIVED CONSTANTS                                                         */
-constexpr int_type pass_offset_steps = (double)eff_pass_offset_length * m_steps_per_rev /
+constexpr int_type pass_offset_steps = (double)(eff_pass_offset_length * m_steps_per_rev) /
                                        (TWO_PI * m_radius);
-constexpr int_type passes_per_layer = (double)1 + (TWO_PI * m_radius / eff_pass_offset_length);
+constexpr int_type passes_per_layer = (double)1 + ((TWO_PI * m_radius) / eff_pass_offset_length);
 
 /* I/O PINS                                                                  */
 constexpr int_type c_far_switch_pin = 13;

@@ -36,11 +36,7 @@ int main_()
   Mandrel.set_velocity(config::m_homing_velocity);
   Rotator.set_rev_per_sec(config::r_homing_velocity);
 
-  Serial.print("Layers: ");
-  Serial.print(config::passes_per_layer);
-  Serial.print("\n");
-
-  /* Home Mandrel */
+  /* Home Mandrel - Guarantees Mandrel starts first pass at correct step count */
   bool mandrel_step_count_flushed = false;
   while (!mandrel_step_count_flushed || Mandrel.get_step_count() != Mandrel.get_step_count_at_start_of_pass())
   {
@@ -65,7 +61,7 @@ int main_()
     }
   }
 
-  /* Home Rotator */
+  /* Home Rotator - Guarantees Rotator initially in the 0deg position */
   bool rotator_switch_pressed = false;
   while (Rotator.get_step_count() < config::r_steps_to_home || !rotator_switch_pressed)
   {
@@ -89,7 +85,7 @@ int main_()
   /* Required to home carriage the correct steps for acceleration profile */
   util::setup_for_wind_(Mandrel, Carriage, Rotator);
 
-  /* Home Carriage */
+  /* Home Carriage - Guarantees Carriage is the correct steps before C_Home_Switch for acceleration profile */
   int_type step_count = 0;
   bool home_switch_pressed = false;
   while (!home_switch_pressed || step_count < Carriage.get_total_accel_steps())
@@ -126,6 +122,8 @@ int main_()
   before the next pass begins.
   ---------------------------------------------------------------------------*/
 
+  /* Ensures that mandrel far end wait distance is set such that carriage will arrive back at mandrel 
+     with atleast min wait steps before next pass */
   while (!Carriage.is_at_home_end() || Carriage.is_decelerating())
   {
     long_int_type curr_usec = micros();
@@ -156,7 +154,6 @@ int main_()
       {
         if (Mandrel.get_step_count() == Mandrel.get_step_count_at_start_of_pass())
         {
-
           Carriage.start_accelerating();
           Carriage.clear_home_dir_flip_flag();
 
@@ -180,25 +177,31 @@ int main_()
       }
     }
 
-    // curr_usec = micros();
-    // if (Rotator.is_enabled() && curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
-    // {
-    //   Rotator.set_last_step_time(curr_usec);
-    //   Rotator.step();
-    //   Rotator.inc_step_count();
-    //   Rotator.check_rotation_finished();
-    // }
+    curr_usec = micros();
+    if (Rotator.is_enabled() && curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
+    {
+      Rotator.set_last_step_time(curr_usec);
+      Rotator.step();
+      Rotator.inc_step_count();
+      Rotator.check_rotation_finished();
+    }
 
     if (C_Home_Switch.is_rising_edge())
     {
       Carriage.set_home_end_flag();
       Carriage.start_decelerating();
+
+      Rotator.flip_dir();
+      Rotator.enable();
     }
 
     if (C_Far_Switch.is_rising_edge())
     {
       Carriage.set_far_end_flag();
       Carriage.start_decelerating();
+
+      Rotator.flip_dir();
+      Rotator.enable();
     }
 
     if (Carriage.is_at_far_end() && !Carriage.is_decelerating())
@@ -208,9 +211,6 @@ int main_()
       Carriage.clear_far_end_flag();
       Carriage.flip_dir();
       Carriage.set_far_dir_flip_flag();
-
-      Rotator.flip_dir();
-      Rotator.enable();
     }
 
     if (M_Encoder_Switch.is_rising_edge())
@@ -225,9 +225,6 @@ int main_()
   Carriage.flip_dir();
   Carriage.set_home_dir_flip_flag();
 
-  Rotator.flip_dir();
-  Rotator.enable();
-
   // Calibration pass is really first pass of wind
   Mandrel.inc_step_count_at_start_of_pass();
 
@@ -236,7 +233,7 @@ int main_()
                                             Mandrel.get_far_end_wait_steps()))
   {
     Mandrel.add_to_far_end_wait_steps(Mandrel.get_far_end_wait_steps() + util::step_tolerance);
-    util::delay_for_mandrel_revolution(Mandrel, Rotator, M_Encoder_Switch);
+    util::delay_for_mandrel_revolution(Mandrel, M_Encoder_Switch);
   }
 
   /*---------------------------------------------------------------------------
@@ -262,7 +259,7 @@ int main_()
                                                 Mandrel.get_step_count_at_start_of_pass(),
                                                 Mandrel.get_far_end_wait_steps()))
       {
-        util::delay_for_mandrel_revolution(Mandrel, Rotator, M_Encoder_Switch);
+        util::delay_for_mandrel_revolution(Mandrel, M_Encoder_Switch);
       }
     }
 
@@ -317,19 +314,22 @@ int main_()
       }
     }
 
-    // curr_usec = micros();
-    // if (Rotator.is_enabled() && curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
-    // {
-    //   Rotator.set_last_step_time(curr_usec);
-    //   Rotator.step();
-    //   Rotator.inc_step_count();
-    //   Rotator.check_rotation_finished();
-    // }
+    curr_usec = micros();
+    if (Rotator.is_enabled() && curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
+    {
+      Rotator.set_last_step_time(curr_usec);
+      Rotator.step();
+      Rotator.inc_step_count();
+      Rotator.check_rotation_finished();
+    }
 
     if (C_Home_Switch.is_rising_edge())
     {
       Carriage.set_home_end_flag();
       Carriage.start_decelerating();
+
+      Rotator.flip_dir();
+      Rotator.enable();
     }
 
     if (Carriage.is_at_home_end() && !Carriage.is_decelerating())
@@ -340,8 +340,13 @@ int main_()
       Carriage.flip_dir();
       Carriage.set_home_dir_flip_flag();
 
-      Rotator.flip_dir();
-      Rotator.enable();
+      // Need to check this every time home is reached as steps taken per pass varies
+      if (util::too_few_wait_steps_on_home_side(Mandrel.get_step_count(),
+                                                Mandrel.get_step_count_at_start_of_pass(),
+                                                Mandrel.get_far_end_wait_steps()))
+      {
+        util::delay_for_mandrel_revolution(Mandrel, M_Encoder_Switch);
+      }
 
       ++passes;
     }
@@ -350,6 +355,9 @@ int main_()
     {
       Carriage.set_far_end_flag();
       Carriage.start_decelerating();
+
+      Rotator.flip_dir();
+      Rotator.enable();
     }
 
     if (Carriage.is_at_far_end() && !Carriage.is_decelerating())
@@ -359,9 +367,6 @@ int main_()
       Carriage.clear_far_end_flag();
       Carriage.flip_dir();
       Carriage.set_far_dir_flip_flag();
-
-      Rotator.flip_dir();
-      Rotator.enable();
     }
 
     if (M_Encoder_Switch.is_rising_edge())

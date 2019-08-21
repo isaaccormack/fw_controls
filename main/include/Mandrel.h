@@ -11,7 +11,7 @@ public:
 
   void set_velocity(const double &tan_velocity)
   {
-    set_usec_per_step(1000000 * TWO_PI * config::m_radius / (config::m_steps_per_rev * tan_velocity));
+    set_usec_per_step((1000000 * TWO_PI * config::m_radius) / (config::m_steps_per_rev * tan_velocity));
   }
 
   void inc_step_count() { ++step_count_; }

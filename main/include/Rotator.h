@@ -15,9 +15,21 @@ public:
     set_usec_per_step(1000000 / (2 * config::steps_per_rev * rev_per_sec));
   }
 
-  void set_rev_per_sec(const double &c_velocity, const int_type &c_accel_dist)
+  void set_rev_per_sec(const double &c_accel_dist, const double &c_velocity)
   {
-    set_rev_per_sec((c_velocity * (90.0 - config::deg_wrap_angle)) / (2.0 * (c_accel_dist - 0.05) * 360));
+
+    double rev_per_sec = (c_velocity * (90.0 - config::deg_wrap_angle)) / (2.0 * c_accel_dist * 360);
+    Serial.print("rev per sec: ");
+    Serial.print(rev_per_sec);
+    Serial.print("\n");
+    Serial.print("c_accel_dist: ");
+    Serial.print(c_accel_dist);
+    Serial.print("\n");
+    Serial.print("deg_wrap_angle: ");
+    Serial.print(config::deg_wrap_angle);
+    Serial.print("\n");
+
+    set_rev_per_sec(rev_per_sec);
   }
 
   void check_rotation_finished()
@@ -42,5 +54,7 @@ private:
 
   constexpr static int_type steps_for_wrap_angle_ = (double)(90.0 - config::deg_wrap_angle) * config::r_steps_per_deg;
 };
+
+constexpr config::int_type Rotator::steps_for_wrap_angle_;
 
 #endif
