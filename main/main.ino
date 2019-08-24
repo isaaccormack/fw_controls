@@ -2,7 +2,6 @@
 #include "include/Mandrel.h"
 #include "include/Rotator.h"
 #include "include/Switch.h"
-#include "include/Utils.cpp"
 
 typedef config::int_type int_type;
 typedef config::long_int_type long_int_type;
@@ -17,10 +16,7 @@ int main_()
 
   Switch C_Home_Switch(config::c_home_switch_pin);
   Switch C_Far_Switch(config::c_far_switch_pin);
-  Switch M_Encoder_Switch(config::m_encoder_switch_pin, HIGH);
   Switch Rotator_Switch(config::r_switch_pin);
-
-  Switch *Carriage_Switches[2] = {&C_Home_Switch, &C_Far_Switch};
 
   /*---------------------------------------------------------------------------
                           <Home Carriage and Mandrel>
@@ -32,60 +28,127 @@ int main_()
   position.
   ---------------------------------------------------------------------------*/
 
-  Carriage.set_velocity(config::c_homing_velocity); // can change this to acceleration once tested
-  Mandrel.set_velocity(config::m_homing_velocity);
-  Rotator.set_rev_per_sec(config::r_homing_velocity);
+  // /* Home Rotator - Guarantees Rotator initially in the 0deg position */
+  // Rotator.set_rev_per_sec(config::r_homing_rev_per_sec);
+  // bool rotator_switch_pressed = false;
+  // while (Rotator.get_step_count() < config::r_steps_to_home || !rotator_switch_pressed)
+  // {
+  //   if (Rotator_Switch.is_rising_edge())
+  //   {
+  //     Rotator.flip_dir();
+  //     Rotator.clear_step_count();
+  //     rotator_switch_pressed = true;
+  //   }
+  //   long_int_type curr_usec = micros();
+  //   if (curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
+  //   {
+  //     Rotator.set_last_step_time(curr_usec);
+  //     Rotator.step();
+  //     Rotator.inc_step_count();
+  //   }
+  // }
+  // Rotator.clear_step_count();
+  // Rotator.flip_dir();
 
-  /* Home Mandrel - Guarantees Mandrel starts first pass at correct step count */
-  bool mandrel_step_count_flushed = false;
-  while (!mandrel_step_count_flushed || Mandrel.get_step_count() != Mandrel.get_step_count_at_start_of_pass())
+  // Private scope so helper variables are cleared off stack before control algo
   {
-    long_int_type curr_usec = micros();
-    if (curr_usec - Mandrel.get_last_step_time() > Mandrel.get_usec_per_step())
+    const double c_accel_dist = (39.375 / config::deg_wrap_angle) - 0.3125; // linear eq. between [30deg -> 1in, 90deg -> 0.125in]
+    const double c_accel_steps = (c_accel_dist * config::steps_per_rev) / (config::c_pulley_pitch * config::c_num_pulley_teeth);
+    Carriage.set_total_accel_steps(c_accel_steps);
+
+    // Set each to max velocity
+    double m_velocity = TWO_PI * config::m_radius * config::m_max_rev_per_sec;
+    double c_velocity = 8.0 + (2.0 * c_accel_dist); // linear eq. between [0.125in -> 8.25in/s, 1in -> 10in/s]
+
+    const double crit_wrap_angle = atan2f(m_velocity, c_velocity);
+    const double deg_crit_wrap_angle = (180.0 * crit_wrap_angle) / PI;
+    if ((config::deg_wrap_angle + 0.25) < deg_crit_wrap_angle) // + 0.25 to prevent wrap_angle close to crit_wrap_angle causing error is floating point equation
     {
-      Mandrel.set_last_step_time(curr_usec);
-      Mandrel.step();
-      Mandrel.inc_step_count();
-      Mandrel.inc_backup_step_count();
+      // Then max speed of wind is bounded by max carriage velocity
+      m_velocity = c_velocity * tan(config::wrap_angle);
+      const double mandrel_rev_per_sec = m_velocity / (TWO_PI * config::m_radius);
+      if (mandrel_rev_per_sec > config::m_min_resonant_rev_per_sec && mandrel_rev_per_sec < config::m_max_resonant_rev_per_sec)
+      {
+        // Then rev per sec of mandrel motor is in range of resonant frequency
+        m_velocity = TWO_PI * config::m_radius * config::m_min_resonant_rev_per_sec;
+        c_velocity = m_velocity / tan(config::wrap_angle);
+      }
+    }
+    else
+    {
+      // Max speed of wind is bounded by max mandrel rev per sec
+      c_velocity = m_velocity / tan(config::wrap_angle);
     }
 
-    /* Note that is_rising_edge() sometimes reports true on falling edge. Think this is because
-       of long indeterminate state (~50ms) on falling edge due to RC values in RC circuit
-       (ie. a LOW value is read then a HIGH value due to indeterminate state).
-       Possible solved by using latched switches? */
-    if (M_Encoder_Switch.is_rising_edge())
+    Mandrel.set_velocity(m_velocity);
+    Carriage.set_init_usec_per_step_accel(c_accel_dist, c_velocity);
+
+    // ALSO could just time a pass length and estimate mandrel steps based on that
+
+    // Experimentally find time of acceleration and deceleration
+    long_int_type start_time = micros();
+
+    Carriage.start_accelerating();
+    while (Carriage.is_accelerating() || Carriage.is_decelerating())
     {
-      Mandrel.clear_step_count();
-      Mandrel.clear_backup_step_count();
-      mandrel_step_count_flushed = true;
+
+      long_int_type curr_usec = micros();
+      if (curr_usec - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
+      {
+        if (Carriage.is_accelerating())
+        {
+          Carriage.set_next_usec_per_step_accel();
+          Carriage.check_accel_finished();
+          if (!Carriage.is_accelerating())
+          {
+            Carriage.start_decelerating();
+          }
+        }
+        else if (Carriage.is_decelerating())
+        {
+          Carriage.set_next_usec_per_step_decel();
+          Carriage.check_decel_finished();
+        }
+        Carriage.set_last_step_time(curr_usec);
+      }
     }
+
+    long_int_type accel_decel_time = micros() - start_time;
+
+    Serial.print("Total accel and decel time is: ");
+    Serial.print(accel_decel_time);
+    Serial.print("\n");
+
+    const double mandrel_stes_middle = (config::m_steps_per_rev * config::wind_length * tan(config::wrap_angle)) / (TWO_PI * config::m_radius);
+    Serial.print("MIDDLE mandrel_steps: ");
+    Serial.print(mandrel_stes_middle);
+    Serial.print("\n");
+
+    const double mandrel_steps_accel = (((double)accel_decel_time / 1000000) * m_velocity * config::m_steps_per_rev) / (TWO_PI * config::m_radius);
+    const long_int_type mandrel_steps = (long_int_type)(mandrel_stes_middle + mandrel_steps_accel) % config::m_steps_per_rev;
+
+    // fairly certain up to here not including accel steps
+    Serial.print("mandrel_steps: ");
+    Serial.print(mandrel_steps);
+    Serial.print("\n");
+    Serial.print("m_velocity: ");
+    Serial.print(m_velocity);
+    Serial.print("\n");
+
+    int i = -10;
+    double dwell_steps = 0;
+    const double offset_steps = (double)(config::m_steps_per_rev / (2 * config::patterns_per_circuit * config::circuits_per_layer)) - mandrel_steps;
+    while (dwell_steps < config::min_dwell_steps)
+    {
+      dwell_steps = ((double)i * config::m_steps_per_rev * (1.0 + (1.0 / config::patterns_per_circuit)) / 2.0) + offset_steps;
+      ++i;
+    }
+
+    Mandrel.set_dwell_steps((int_type)dwell_steps);
   }
-
-  /* Home Rotator - Guarantees Rotator initially in the 0deg position */
-  bool rotator_switch_pressed = false;
-  while (Rotator.get_step_count() < config::r_steps_to_home || !rotator_switch_pressed)
-  {
-    if (Rotator_Switch.is_rising_edge())
-    {
-      Rotator.flip_dir();
-      Rotator.clear_step_count();
-      rotator_switch_pressed = true;
-    }
-    long_int_type curr_usec = micros();
-    if (curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
-    {
-      Rotator.set_last_step_time(curr_usec);
-      Rotator.step();
-      Rotator.inc_step_count();
-    }
-  }
-  Rotator.clear_step_count();
-  Rotator.flip_dir();
-
-  /* Required to home carriage the correct steps for acceleration profile */
-  util::setup_for_wind_(Mandrel, Carriage, Rotator);
 
   /* Home Carriage - Guarantees Carriage is the correct steps before C_Home_Switch for acceleration profile */
+  Carriage.set_velocity(config::c_homing_velocity); // can change this to acceleration once tested
   int_type step_count = 0;
   bool home_switch_pressed = false;
   while (!home_switch_pressed || step_count < Carriage.get_total_accel_steps())
@@ -104,140 +167,10 @@ int main_()
     }
   }
   Carriage.flip_dir();
-  Carriage.set_home_dir_flip_flag();
+  Carriage.set_dwell_flag();
 
   /*---------------------------------------------------------------------------
-                  <Find and Set Minimum Wait Time on Far End>
-  Calibration sub-routine to find minimal wait steps at the far end such that
-  there are greater than config::min_wait_steps between the time the carriage
-  arrives at the home end and it is scheduled to start the next pass. Specifically
-  this is done by completing the first pass of the wind and checking if the 
-  difference between the mandrel steps at start of next pass and mandrel steps
-  completed when the carriage arrived at home position is less than config::min_wait_steps,
-  or if the carriage arrived only a few steps after it is scheduled to leave. In
-  either case, the wait steps on the far end is incremented such that this will
-  not be the case for successive passes on this layer and the carriage performs
-  an extra revolution to provide adequate delay. It should be noted that at least
-  the minimal wait time on each end is necessary so that the filament can settle 
-  before the next pass begins.
-  ---------------------------------------------------------------------------*/
-
-  /* Ensures that mandrel far end wait distance is set such that carriage will arrive back at mandrel 
-     with atleast min wait steps before next pass */
-  while (!Carriage.is_at_home_end() || Carriage.is_decelerating())
-  {
-    long_int_type curr_usec = micros();
-    if (curr_usec - Mandrel.get_last_step_time() > Mandrel.get_usec_per_step())
-    {
-      Mandrel.set_last_step_time(curr_usec);
-      Mandrel.step();
-      Mandrel.inc_step_count();
-      Mandrel.inc_backup_step_count();
-    }
-
-    curr_usec = micros();
-    if (curr_usec - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
-    {
-      if (Carriage.is_far_dir_flip_flag_set())
-      {
-        if (Mandrel.get_step_count() - Mandrel.get_step_count_at_far_dir_flip() >= Mandrel.get_far_end_wait_steps())
-        {
-          Mandrel.sync_step_count_with_backup();
-
-          Carriage.start_accelerating();
-          Carriage.clear_far_dir_flip_flag();
-
-          Rotator.enable();
-        }
-      }
-      else if (Carriage.is_home_dir_flip_flag_set())
-      {
-        if (Mandrel.get_step_count() == Mandrel.get_step_count_at_start_of_pass())
-        {
-          Carriage.start_accelerating();
-          Carriage.clear_home_dir_flip_flag();
-
-          Rotator.enable();
-        }
-      }
-      else
-      {
-        if (Carriage.is_accelerating())
-        {
-          Carriage.set_next_usec_per_step_accel();
-          Carriage.check_accel_finished();
-        }
-        else if (Carriage.is_decelerating())
-        {
-          Carriage.set_next_usec_per_step_decel();
-          Carriage.check_decel_finished();
-        }
-        Carriage.set_last_step_time(curr_usec);
-        Carriage.step();
-      }
-    }
-
-    curr_usec = micros();
-    if (Rotator.is_enabled() && curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
-    {
-      Rotator.set_last_step_time(curr_usec);
-      Rotator.step();
-      Rotator.inc_step_count();
-      Rotator.check_rotation_finished();
-    }
-
-    if (C_Home_Switch.is_rising_edge())
-    {
-      Carriage.set_home_end_flag();
-      Carriage.start_decelerating();
-
-      Rotator.flip_dir();
-      Rotator.enable();
-    }
-
-    if (C_Far_Switch.is_rising_edge())
-    {
-      Carriage.set_far_end_flag();
-      Carriage.start_decelerating();
-
-      Rotator.flip_dir();
-      Rotator.enable();
-    }
-
-    if (Carriage.is_at_far_end() && !Carriage.is_decelerating())
-    {
-      Mandrel.set_step_count_at_far_dir_flip();
-
-      Carriage.clear_far_end_flag();
-      Carriage.flip_dir();
-      Carriage.set_far_dir_flip_flag();
-    }
-
-    if (M_Encoder_Switch.is_rising_edge())
-    {
-      if (!Carriage.is_far_dir_flip_flag_set())
-        Mandrel.clear_step_count();
-
-      Mandrel.clear_backup_step_count();
-    }
-  }
-  Carriage.clear_home_end_flag();
-  Carriage.flip_dir();
-  Carriage.set_home_dir_flip_flag();
-
-  // Calibration pass is really first pass of wind
-  Mandrel.inc_step_count_at_start_of_pass();
-
-  if (util::too_few_wait_steps_on_home_side(Mandrel.get_step_count(),
-                                            Mandrel.get_step_count_at_start_of_pass(),
-                                            Mandrel.get_far_end_wait_steps()))
-  {
-    Mandrel.add_to_far_end_wait_steps(Mandrel.get_far_end_wait_steps() + util::step_tolerance);
-    util::delay_for_mandrel_revolution(Mandrel, M_Encoder_Switch);
-  }
-
-  /*---------------------------------------------------------------------------
-                    <3 Axis Filament Wind for User Defined Passes>
+                               <3 Axis Filament Wind>
   Main routine which performs a 3 axis filament wind at users specifications defined
   in include/Config.h under CALIBRATIONS FOR USER. Given a user defined wrap angle,
   the carriage and mandrel actuate at a predetermined constant velocity while the
@@ -245,22 +178,25 @@ int main_()
   to the mandrel during a wind.
   ---------------------------------------------------------------------------*/
 
-  int_type passes = 1; // 1 since calibration pass
+  long_int_type accel_time = 0; // for testing
+  long_int_type decel_time = 0; // for testing
+  long_int_type mid_time = 0;   // for testing
+
+  // about to find accel / decel time to validate calibration
+
+  // JUST COUNT steps mandrel takes on one stroke to validate
+
+  int_type strokes = 0;
   int_type layers = 0;
+  int_type m_step_count = 0;
+  int_type m_total_step_count = 0;
+  int_type c_step_count = 0;
   while (layers < config::total_layers)
   {
-    if (passes == config::passes_per_layer)
+    if (strokes == (2 * config::circuits_per_layer))
     {
-      passes = 0;
+      strokes = 0;
       ++layers;
-      Mandrel.set_step_count_at_start_of_pass_by_layer(layers);
-
-      if (util::too_few_wait_steps_on_home_side(Mandrel.get_step_count(),
-                                                Mandrel.get_step_count_at_start_of_pass(),
-                                                Mandrel.get_far_end_wait_steps()))
-      {
-        util::delay_for_mandrel_revolution(Mandrel, M_Encoder_Switch);
-      }
     }
 
     long_int_type curr_usec = micros();
@@ -269,30 +205,24 @@ int main_()
       Mandrel.set_last_step_time(curr_usec);
       Mandrel.step();
       Mandrel.inc_step_count();
-      Mandrel.inc_backup_step_count();
+      ++m_total_step_count;
+      ++m_step_count;
     }
 
     curr_usec = micros();
     if (curr_usec - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
     {
-      if (Carriage.is_far_dir_flip_flag_set())
+      if (Carriage.is_dwell_flag_set())
       {
-        if (Mandrel.get_step_count() - Mandrel.get_step_count_at_far_dir_flip() >= Mandrel.get_far_end_wait_steps())
+        if (Mandrel.get_step_count() == Mandrel.get_dwell_steps())
         {
-          Mandrel.sync_step_count_with_backup();
-
+          Carriage.clear_dwell_flag();
           Carriage.start_accelerating();
-          Carriage.clear_far_dir_flip_flag();
+          Carriage.set_last_step_time(curr_usec);
 
-          Rotator.enable();
-        }
-      }
-      else if (Carriage.is_home_dir_flip_flag_set())
-      {
-        if (Mandrel.get_step_count() == Mandrel.get_step_count_at_start_of_pass())
-        {
-          Carriage.start_accelerating();
-          Carriage.clear_home_dir_flip_flag();
+          m_total_step_count = 0;
+
+          accel_time = curr_usec;
 
           Rotator.enable();
         }
@@ -303,80 +233,76 @@ int main_()
         {
           Carriage.set_next_usec_per_step_accel();
           Carriage.check_accel_finished();
+          if (!Carriage.is_accelerating())
+          {
+            Serial.print("Time for accleration: ");
+            Serial.print(curr_usec - accel_time);
+            Serial.print("\n");
+            mid_time = curr_usec;
+            c_step_count = 0;
+            m_step_count = 0;
+          }
         }
         else if (Carriage.is_decelerating())
         {
           Carriage.set_next_usec_per_step_decel();
           Carriage.check_decel_finished();
+          if (!Carriage.is_decelerating())
+          {
+            Serial.print("Time for decleration: ");
+            Serial.print(curr_usec - decel_time);
+            Serial.print("\n");
+            Serial.print("Total stroke time: ");
+            Serial.print(curr_usec - accel_time);
+            Serial.print("\n");
+          }
         }
         Carriage.set_last_step_time(curr_usec);
         Carriage.step();
+        ++c_step_count;
       }
     }
 
-    curr_usec = micros();
-    if (Rotator.is_enabled() && curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
-    {
-      Rotator.set_last_step_time(curr_usec);
-      Rotator.step();
-      Rotator.inc_step_count();
-      Rotator.check_rotation_finished();
-    }
+    // curr_usec = micros();
+    // if (Rotator.is_enabled() && curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
+    // {
+    //   Rotator.set_last_step_time(curr_usec);
+    //   Rotator.step();
+    //   Rotator.inc_step_count();
+    //   Rotator.check_rotation_finished();
+    // }
 
-    if (C_Home_Switch.is_rising_edge())
+    if (C_Home_Switch.is_rising_edge() || C_Far_Switch.is_rising_edge())
     {
-      Carriage.set_home_end_flag();
+      Serial.print("Time for mid section: ");
+      Serial.print(micros() - mid_time);
+      Serial.print("\n");
+      Serial.print("Total mandrel steps: ");
+      Serial.print(m_step_count);
+      Serial.print("\n");
+      Serial.print("Total carriage steps: ");
+      Serial.print(c_step_count);
+      Serial.print("\n");
+      Carriage.set_decel_flag();
       Carriage.start_decelerating();
+      decel_time = micros();
 
       Rotator.flip_dir();
       Rotator.enable();
     }
 
-    if (Carriage.is_at_home_end() && !Carriage.is_decelerating())
+    if (Carriage.is_decel_flag_set() && !Carriage.is_decelerating())
     {
-      Mandrel.inc_step_count_at_start_of_pass();
-
-      Carriage.clear_home_end_flag();
+      Serial.print("TOTAL mandrel steps: ");
+      Serial.print(m_total_step_count);
+      Serial.print("\n");
+      Carriage.clear_decel_flag();
       Carriage.flip_dir();
-      Carriage.set_home_dir_flip_flag();
+      Carriage.set_dwell_flag();
 
-      // Need to check this every time home is reached as steps taken per pass varies
-      if (util::too_few_wait_steps_on_home_side(Mandrel.get_step_count(),
-                                                Mandrel.get_step_count_at_start_of_pass(),
-                                                Mandrel.get_far_end_wait_steps()))
-      {
-        util::delay_for_mandrel_revolution(Mandrel, M_Encoder_Switch);
-      }
+      Mandrel.clear_step_count();
 
-      ++passes;
-    }
-
-    if (C_Far_Switch.is_rising_edge())
-    {
-      Carriage.set_far_end_flag();
-      Carriage.start_decelerating();
-
-      Rotator.flip_dir();
-      Rotator.enable();
-    }
-
-    if (Carriage.is_at_far_end() && !Carriage.is_decelerating())
-    {
-      Mandrel.set_step_count_at_far_dir_flip();
-
-      Carriage.clear_far_end_flag();
-      Carriage.flip_dir();
-      Carriage.set_far_dir_flip_flag();
-    }
-
-    if (M_Encoder_Switch.is_rising_edge())
-    {
-      /* Don't clear step count at far end b/c wait criteria relies on difference between initial and
-         current step count values. Home end uses comparison against absolute so doesn't matter. */
-      if (!Carriage.is_far_dir_flip_flag_set())
-        Mandrel.clear_step_count();
-
-      Mandrel.clear_backup_step_count();
+      ++strokes;
     }
   }
   return 0;
