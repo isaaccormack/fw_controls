@@ -17,6 +17,7 @@ int main_()
   Switch C_Home_Switch(config::c_home_switch_pin);
   Switch C_Far_Switch(config::c_far_switch_pin);
   Switch Rotator_Switch(config::r_switch_pin);
+  Switch M_Encoder_Switch(config::m_encoder_switch_pin);
 
   /*---------------------------------------------------------------------------
                           <Home Carriage and Mandrel>
@@ -27,6 +28,14 @@ int main_()
   C_Home_Switch and mandrel to default intialized step_count_at_start_of_pass
   position.
   ---------------------------------------------------------------------------*/
+
+  // Current prognosis of system is that it seems everything is working functionally, except either
+  // a calculation of the dwell steps or something of the like is either fundamentally wrong,
+  // or wrong in implementation (possible rounding error). It seems that somethims multiple patterns
+  // per circuit is not respected but instead it acts as one pattern per circuit, also the machine
+  // either advances too much between passes or not at all. This has not always been the case, the
+  // system has worked more or less with this equation prior giving (more) accurate distances
+  // between strands therefore assume error in implementation of some part of initial setup algo.
 
   // /* Home Rotator - Guarantees Rotator initially in the 0deg position */
   // Rotator.set_rev_per_sec(config::r_homing_rev_per_sec);
@@ -53,7 +62,7 @@ int main_()
   // Private scope so helper variables are cleared off stack before control algo
   {
     const double c_accel_dist = (39.375 / config::deg_wrap_angle) - 0.3125; // linear eq. between [30deg -> 1in, 90deg -> 0.125in]
-    const double c_accel_steps = (c_accel_dist * config::steps_per_rev) / (config::c_pulley_pitch * config::c_num_pulley_teeth);
+    const int_type c_accel_steps = (c_accel_dist * config::steps_per_rev) / (config::c_pulley_pitch * config::c_num_pulley_teeth);
     Carriage.set_total_accel_steps(c_accel_steps);
 
     // Set each to max velocity
@@ -83,72 +92,29 @@ int main_()
     Mandrel.set_velocity(m_velocity);
     Carriage.set_init_usec_per_step_accel(c_accel_dist, c_velocity);
 
-    // ALSO could just time a pass length and estimate mandrel steps based on that
-
-    // Experimentally find time of acceleration and deceleration
-    long_int_type start_time = micros();
-
-    Carriage.start_accelerating();
-    while (Carriage.is_accelerating() || Carriage.is_decelerating())
+    const int offset_steps = (config::m_steps_per_rev / (2 * config::patterns_per_circuit * config::circuits_per_layer)) - config::mandrel_steps;
+    int dwell_steps = 0;
+    for (int_type i = 0; dwell_steps < config::min_dwell_steps; ++i)
     {
-
-      long_int_type curr_usec = micros();
-      if (curr_usec - Carriage.get_last_step_time() > Carriage.get_usec_per_step())
-      {
-        if (Carriage.is_accelerating())
-        {
-          Carriage.set_next_usec_per_step_accel();
-          Carriage.check_accel_finished();
-          if (!Carriage.is_accelerating())
-          {
-            Carriage.start_decelerating();
-          }
-        }
-        else if (Carriage.is_decelerating())
-        {
-          Carriage.set_next_usec_per_step_decel();
-          Carriage.check_decel_finished();
-        }
-        Carriage.set_last_step_time(curr_usec);
-      }
+      dwell_steps = ((i * config::m_steps_per_rev * (1 + (double)(1.0 / config::patterns_per_circuit))) / 2) + offset_steps;
     }
-
-    long_int_type accel_decel_time = micros() - start_time;
-
-    Serial.print("Total accel and decel time is: ");
-    Serial.print(accel_decel_time);
+    Serial.print("dwell steps is: ");
+    Serial.print(dwell_steps);
     Serial.print("\n");
 
-    const double mandrel_stes_middle = (config::m_steps_per_rev * config::wind_length * tan(config::wrap_angle)) / (TWO_PI * config::m_radius);
-    Serial.print("MIDDLE mandrel_steps: ");
-    Serial.print(mandrel_stes_middle);
-    Serial.print("\n");
+    Mandrel.set_dwell_steps(dwell_steps);
+  }
 
-    const double mandrel_steps_accel = (((double)accel_decel_time / 1000000) * m_velocity * config::m_steps_per_rev) / (TWO_PI * config::m_radius);
-    const long_int_type mandrel_steps = (long_int_type)(mandrel_stes_middle + mandrel_steps_accel) % config::m_steps_per_rev;
-
-    // fairly certain up to here not including accel steps
-    Serial.print("mandrel_steps: ");
-    Serial.print(mandrel_steps);
-    Serial.print("\n");
-    Serial.print("m_velocity: ");
-    Serial.print(m_velocity);
-    Serial.print("\n");
-
-    int i = -10;
-    double dwell_steps = 0;
-    const double offset_steps = (double)(config::m_steps_per_rev / (2 * config::patterns_per_circuit * config::circuits_per_layer)) - mandrel_steps;
-    while (dwell_steps < config::min_dwell_steps)
-    {
-      dwell_steps = ((double)i * config::m_steps_per_rev * (1.0 + (1.0 / config::patterns_per_circuit)) / 2.0) + offset_steps;
-      ++i;
-    }
-
-    Mandrel.set_dwell_steps((int_type)dwell_steps);
+  // Set beginning of stoke Mandrel step count for all circuits
+  int_type start_of_pattern_step_count[config::patterns_per_circuit];
+  start_of_pattern_step_count[0] = 0;
+  for (int i = 1; i < config::patterns_per_circuit; ++i)
+  {
+    start_of_pattern_step_count[i] = (start_of_pattern_step_count[i - 1] + (2 * config::mandrel_steps) + (2 * Mandrel.get_dwell_steps())) % config::m_steps_per_rev;
   }
 
   /* Home Carriage - Guarantees Carriage is the correct steps before C_Home_Switch for acceleration profile */
-  Carriage.set_velocity(config::c_homing_velocity); // can change this to acceleration once tested
+  Carriage.set_velocity(config::c_homing_velocity);
   int_type step_count = 0;
   bool home_switch_pressed = false;
   while (!home_switch_pressed || step_count < Carriage.get_total_accel_steps())
@@ -178,19 +144,11 @@ int main_()
   to the mandrel during a wind.
   ---------------------------------------------------------------------------*/
 
-  long_int_type accel_time = 0; // for testing
-  long_int_type decel_time = 0; // for testing
-  long_int_type mid_time = 0;   // for testing
-
-  // about to find accel / decel time to validate calibration
-
-  // JUST COUNT steps mandrel takes on one stroke to validate
-
   int_type strokes = 0;
   int_type layers = 0;
   int_type m_step_count = 0;
-  int_type m_total_step_count = 0;
-  int_type c_step_count = 0;
+  int_type curr_pattern = 0;
+
   while (layers < config::total_layers)
   {
     if (strokes == (2 * config::circuits_per_layer))
@@ -205,7 +163,6 @@ int main_()
       Mandrel.set_last_step_time(curr_usec);
       Mandrel.step();
       Mandrel.inc_step_count();
-      ++m_total_step_count;
       ++m_step_count;
     }
 
@@ -214,15 +171,13 @@ int main_()
     {
       if (Carriage.is_dwell_flag_set())
       {
-        if (Mandrel.get_step_count() == Mandrel.get_dwell_steps())
+        if (Mandrel.get_step_count() == start_of_pattern_step_count[curr_pattern])
         {
+          m_step_count = 0;
+
           Carriage.clear_dwell_flag();
           Carriage.start_accelerating();
           Carriage.set_last_step_time(curr_usec);
-
-          m_total_step_count = 0;
-
-          accel_time = curr_usec;
 
           Rotator.enable();
         }
@@ -233,15 +188,6 @@ int main_()
         {
           Carriage.set_next_usec_per_step_accel();
           Carriage.check_accel_finished();
-          if (!Carriage.is_accelerating())
-          {
-            Serial.print("Time for accleration: ");
-            Serial.print(curr_usec - accel_time);
-            Serial.print("\n");
-            mid_time = curr_usec;
-            c_step_count = 0;
-            m_step_count = 0;
-          }
         }
         else if (Carriage.is_decelerating())
         {
@@ -249,17 +195,13 @@ int main_()
           Carriage.check_decel_finished();
           if (!Carriage.is_decelerating())
           {
-            Serial.print("Time for decleration: ");
-            Serial.print(curr_usec - decel_time);
-            Serial.print("\n");
-            Serial.print("Total stroke time: ");
-            Serial.print(curr_usec - accel_time);
+            Serial.print("For Calibration - Total Mandrel Steps: ");
+            Serial.print(m_step_count % config::m_steps_per_rev);
             Serial.print("\n");
           }
         }
         Carriage.set_last_step_time(curr_usec);
         Carriage.step();
-        ++c_step_count;
       }
     }
 
@@ -274,18 +216,8 @@ int main_()
 
     if (C_Home_Switch.is_rising_edge() || C_Far_Switch.is_rising_edge())
     {
-      Serial.print("Time for mid section: ");
-      Serial.print(micros() - mid_time);
-      Serial.print("\n");
-      Serial.print("Total mandrel steps: ");
-      Serial.print(m_step_count);
-      Serial.print("\n");
-      Serial.print("Total carriage steps: ");
-      Serial.print(c_step_count);
-      Serial.print("\n");
       Carriage.set_decel_flag();
       Carriage.start_decelerating();
-      decel_time = micros();
 
       Rotator.flip_dir();
       Rotator.enable();
@@ -293,16 +225,42 @@ int main_()
 
     if (Carriage.is_decel_flag_set() && !Carriage.is_decelerating())
     {
-      Serial.print("TOTAL mandrel steps: ");
-      Serial.print(m_total_step_count);
-      Serial.print("\n");
       Carriage.clear_decel_flag();
       Carriage.flip_dir();
       Carriage.set_dwell_flag();
 
-      Mandrel.clear_step_count();
+      for (int i = 0; i < config::patterns_per_circuit; ++i)
+      {
+        Serial.print("start of pattern at ");
+        Serial.print(i);
+        Serial.print(" is ");
+        Serial.print(start_of_pattern_step_count[i]);
+        Serial.print("\n");
+      }
+
+      start_of_pattern_step_count[curr_pattern] = (start_of_pattern_step_count[curr_pattern] + config::mandrel_steps + Mandrel.get_dwell_steps()) % config::m_steps_per_rev;
 
       ++strokes;
+      if (strokes % 2 == 0)
+      {
+        ++curr_pattern;
+        if (curr_pattern == config::patterns_per_circuit)
+        {
+          curr_pattern = 0;
+        }
+      }
+    }
+
+    if (M_Encoder_Switch.is_rising_edge())
+    {
+      Serial.print("Mandrel step count at rising edge: ");
+      Serial.print(Mandrel.get_step_count());
+      Serial.print("\n");
+      // Button not being properly debounced currently
+      if (Mandrel.get_step_count() > (config::m_steps_per_rev / 2))
+      {
+        Mandrel.clear_step_count();
+      }
     }
   }
   return 0;

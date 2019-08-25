@@ -7,10 +7,9 @@ typedef unsigned int int_type;
 typedef unsigned long int long_int_type;
 
 /* HOMING CALIBRATIONS                                                       */
-constexpr double c_homing_velocity = 1.0; // in/s
-constexpr double m_homing_velocity = 5.0; // in/s
-constexpr double r_homing_velocity = 0.4; // rev/s
-constexpr int_type r_steps_to_home = 103; // steps
+constexpr double c_homing_velocity = 1.0;    // in/s
+constexpr double r_homing_rev_per_sec = 0.4; // rev/s
+constexpr int_type r_steps_to_home = 103;    // steps
 
 /* CONSTANTS                                                                 */
 constexpr int_type steps_per_rev = 200;     // step/rev
@@ -20,31 +19,33 @@ constexpr int_type c_num_pulley_teeth = 12; // teeth/rev
 constexpr double r_steps_per_deg = 1.1111;  // steps/deg
 
 /* CALIBRATIONS FOR USER                                                     */
-constexpr double deg_wrap_angle = 70.0;          // defined on [30, 88.5] for 3 axis
-constexpr double m_radius = 2.24806;             // in
-constexpr double filament_width = 0.125;         // in
+constexpr double deg_wrap_angle = 35.0; // defined on [30, 80] for 3 axis
+constexpr double m_radius = 2.24806;    // in
+// constexpr double m_radius = 2.96426;             // in - large mandrel
+constexpr double filament_width = 0.25;          // in
 constexpr double filament_percent_overlap = 0.0; // % in range [0, 1]
 constexpr int_type total_layers = 2;             // 1 layer is 2 physical layers due to nature of winding
+constexpr int min_dwell_steps = 50;
+// constexpr double wind_length = 5.08;         // 1 layer is 2 physical layers due to nature of winding
+constexpr double wind_length = 11.0916;      // 1 layer is 2 physical layers due to nature of winding
+constexpr int_type patterns_per_circuit = 3; // [1, 6]
+constexpr int_type mandrel_steps = 600;
 
 /* CALIBRATIONS FOR DEVELOPER                                                */
-constexpr double c_max_velocity = 18.0;             // in/s
-constexpr double m_max_rev_per_sec = 1.0;           // rev/s
+constexpr double c_max_velocity = 18.0; // in/s
+// constexpr double m_max_rev_per_sec = 1.0; // rev/s
+constexpr double m_max_rev_per_sec = 0.5;           // rev/s
 constexpr double m_min_resonant_rev_per_sec = 0.21; // rev/s
 constexpr double m_max_resonant_rev_per_sec = 0.3;  // rev/s
-constexpr int_type max_wait_steps = 350;            // in
-constexpr double min_wait_dist = 3.25;              // in
 
 /* PRIVATE HELPER CONSTANTS                                                  */
 namespace
 {
-constexpr double pass_offset_length = filament_width / cos(deg_wrap_angle * PI / 180.0);
-constexpr double eff_pass_offset_length = pass_offset_length * (1.0 - filament_percent_overlap);
 } // namespace
 
 /* DERIVED CONSTANTS                                                         */
-constexpr int_type pass_offset_steps = (double)(eff_pass_offset_length * m_steps_per_rev) /
-                                       (TWO_PI * m_radius);
-constexpr int_type passes_per_layer = (double)1 + ((TWO_PI * m_radius) / eff_pass_offset_length);
+constexpr double wrap_angle = (PI * deg_wrap_angle) / 180;
+constexpr int_type circuits_per_layer = 1 + ((TWO_PI * m_radius * cos(wrap_angle)) / filament_width);
 
 /* I/O PINS                                                                  */
 constexpr int_type c_far_switch_pin = 13;

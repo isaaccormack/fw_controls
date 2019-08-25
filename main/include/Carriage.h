@@ -38,9 +38,7 @@ public:
   void check_accel_finished()
   {
     if (accel_steps_ == total_accel_steps_)
-    {
       is_accelerating_ = false;
-    }
   }
   void set_next_usec_per_step_decel()
   {
@@ -51,37 +49,22 @@ public:
   void check_decel_finished()
   {
     if (accel_steps_ == 0)
-    {
       is_decelerating_ = false;
-    }
   }
-  void set_total_accel_steps(const double &accel_dist)
-  {
-    total_accel_steps_ = (double)(accel_dist * config::steps_per_rev) / (config::c_pulley_pitch * config::c_num_pulley_teeth);
-  }
+  void set_total_accel_steps(const int_type &accel_steps) { total_accel_steps_ = accel_steps; }
   int_type get_total_accel_steps() const { return total_accel_steps_; }
 
-  void set_home_dir_flip_flag() { home_dir_flip_flag_ = true; }
-  void clear_home_dir_flip_flag() { home_dir_flip_flag_ = false; }
-  bool is_home_dir_flip_flag_set() const { return home_dir_flip_flag_; }
+  void set_decel_flag() { decel_flag_ = true; }
+  void clear_decel_flag() { decel_flag_ = false; }
+  bool is_decel_flag_set() const { return decel_flag_; }
 
-  void set_far_dir_flip_flag() { far_dir_flip_flag_ = true; }
-  void clear_far_dir_flip_flag() { far_dir_flip_flag_ = false; }
-  bool is_far_dir_flip_flag_set() const { return far_dir_flip_flag_; }
-
-  void set_home_end_flag() { at_home_end_flag_ = true; }
-  void clear_home_end_flag() { at_home_end_flag_ = false; }
-  bool is_at_home_end() const { return at_home_end_flag_; }
-
-  void set_far_end_flag() { at_far_end_flag_ = true; }
-  void clear_far_end_flag() { at_far_end_flag_ = false; }
-  bool is_at_far_end() const { return at_far_end_flag_; }
+  void set_dwell_flag() { dwell_flag_ = true; }
+  void clear_dwell_flag() { dwell_flag_ = false; }
+  bool is_dwell_flag_set() const { return dwell_flag_; }
 
 private:
-  bool home_dir_flip_flag_ = false;
-  bool far_dir_flip_flag_ = false;
-  bool at_home_end_flag_ = false;
-  bool at_far_end_flag_ = false;
+  bool decel_flag_ = false;
+  bool dwell_flag_ = false;
 
   bool is_accelerating_ = false;
   bool is_decelerating_ = false;
