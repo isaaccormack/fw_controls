@@ -24,8 +24,6 @@ public:
 private:
   int_type step_count_ = 0;
   int_type dwell_steps_;
-
-  int_type step_count_at_pattern_start[config::patterns_per_circuit];
 };
 
 #endif

@@ -61,6 +61,10 @@ int main_()
 
   // Private scope so helper variables are cleared off stack before control algo
   {
+    Serial.print("circuits_per_layer: ");
+    Serial.print(config::circuits_per_layer);
+    Serial.print("\n");
+
     const double c_accel_dist = (39.375 / config::deg_wrap_angle) - 0.3125; // linear eq. between [30deg -> 1in, 90deg -> 0.125in]
     const int_type c_accel_steps = (c_accel_dist * config::steps_per_rev) / (config::c_pulley_pitch * config::c_num_pulley_teeth);
     Carriage.set_total_accel_steps(c_accel_steps);
@@ -92,17 +96,42 @@ int main_()
     Mandrel.set_velocity(m_velocity);
     Carriage.set_init_usec_per_step_accel(c_accel_dist, c_velocity);
 
-    const int offset_steps = (config::m_steps_per_rev / (2 * config::patterns_per_circuit * config::circuits_per_layer)) - config::mandrel_steps;
-    int dwell_steps = 0;
-    for (int_type i = 0; dwell_steps < config::min_dwell_steps; ++i)
+    // Calculate all possible offset steps given patterns per circuit
+    double offset_steps[config::patterns_per_circuit];
+    int_type dwell_steps[config::patterns_per_circuit];
+    int_type min_viable_dwell_steps = config::m_steps_per_rev;
+    for (int_type m = 0; m < config::patterns_per_circuit; ++m)
     {
-      dwell_steps = ((i * config::m_steps_per_rev * (1 + (double)(1.0 / config::patterns_per_circuit))) / 2) + offset_steps;
+      offset_steps[m] = (config::m_steps_per_rev * (m + (1.0 / config::circuits_per_layer))) / config::patterns_per_circuit;
+      int_type i = (2 * config::mandrel_steps) / (config::m_steps_per_rev + int_type(offset_steps[m]));
+      ++i;
+      dwell_steps[m] = (((i * config::m_steps_per_rev) + int_type(offset_steps[m])) - (2 * config::mandrel_steps)) / 2;
+      if (dwell_steps[m] >= config::min_dwell_steps && dwell_steps[m] < min_viable_dwell_steps)
+      {
+        min_viable_dwell_steps = dwell_steps[m];
+      }
+      // Serial.print("For m = ");
+      // Serial.print(m);
+      // Serial.print(" offset steps = ");
+      // Serial.print(offset_steps[m]);
+      // Serial.print("\n");
+      // Serial.print("For m = ");
+      // Serial.print(m);
+      // Serial.print(" dwell_steps = ");
+      // Serial.print(dwell_steps[m]);
+      // Serial.print("\n");
     }
-    Serial.print("dwell steps is: ");
-    Serial.print(dwell_steps);
+
+    Serial.print("min_viable_dwell_steps = ");
+    Serial.print(min_viable_dwell_steps);
     Serial.print("\n");
 
-    Mandrel.set_dwell_steps(dwell_steps);
+    if (min_viable_dwell_steps == config::m_steps_per_rev)
+    {
+      // Then there are no viable solutions for the given configuration
+    }
+
+    Mandrel.set_dwell_steps(min_viable_dwell_steps);
   }
 
   // Set beginning of stoke Mandrel step count for all circuits

@@ -19,16 +19,15 @@ constexpr int_type c_num_pulley_teeth = 12; // teeth/rev
 constexpr double r_steps_per_deg = 1.1111;  // steps/deg
 
 /* CALIBRATIONS FOR USER                                                     */
-constexpr double deg_wrap_angle = 35.0; // defined on [30, 80] for 3 axis
+constexpr double deg_wrap_angle = 55.0; // defined on [30, 80] for 3 axis
 constexpr double m_radius = 2.24806;    // in
 // constexpr double m_radius = 2.96426;             // in - large mandrel
 constexpr double filament_width = 0.25;          // in
 constexpr double filament_percent_overlap = 0.0; // % in range [0, 1]
 constexpr int_type total_layers = 2;             // 1 layer is 2 physical layers due to nature of winding
 constexpr int min_dwell_steps = 50;
-// constexpr double wind_length = 5.08;         // 1 layer is 2 physical layers due to nature of winding
 constexpr double wind_length = 11.0916;      // 1 layer is 2 physical layers due to nature of winding
-constexpr int_type patterns_per_circuit = 3; // [1, 6]
+constexpr int_type patterns_per_circuit = 2; // [1, 6]
 constexpr int_type mandrel_steps = 600;
 
 /* CALIBRATIONS FOR DEVELOPER                                                */
@@ -37,11 +36,6 @@ constexpr double c_max_velocity = 18.0; // in/s
 constexpr double m_max_rev_per_sec = 0.5;           // rev/s
 constexpr double m_min_resonant_rev_per_sec = 0.21; // rev/s
 constexpr double m_max_resonant_rev_per_sec = 0.3;  // rev/s
-
-/* PRIVATE HELPER CONSTANTS                                                  */
-namespace
-{
-} // namespace
 
 /* DERIVED CONSTANTS                                                         */
 constexpr double wrap_angle = (PI * deg_wrap_angle) / 180;
