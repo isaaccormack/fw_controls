@@ -3,7 +3,7 @@
 The 3-Axis filament winding machine is able to wind on the angles within [30, 80] degrees. For angles > 80 degrees, a special
 case of the 3-Axis winding algorithm, called a hoop wind, should be employed. (Software to be developed, details in ...).
 
-# Physical Configuration
+## Physical Configuration
 First start by adjusting the carriages limit switches to set the start and end position of the wind. For testing, duct tape was
 used to position the limit switches on the wood blocks. This has proven to work well enough to support multiple layer winds, a
 more permanent solution may envolve wood screws. The wooden blocks themselves can be unbolted from the chassis and moved
@@ -17,7 +17,7 @@ Ensure that the limit switch on the applicator head contacts the applicator head
 
 Finally, tension the carriage, mandrel, and rotator head timing belts if necessary. 
 
-# Software Configuration
+## Software Configuration
 Open the user configuration file, main/include/Config.h, and navigate to the CALIBRATIONS FOR USER section. First input the
 desired wrap angle for the wind as the value of deg_wrap_angle. Next input the mandrel's radius. The easiest way to find the
 radius of the mandrel being wound is to measure the cirumference of the mandrel, the calculate the radius by diving that number
@@ -36,8 +36,13 @@ for mandrel_steps. If the value is inconsistent, ensure the carriages limit swit
 belt is tight, and that neither of timing belt pulley for the carriage or mandrel are slipping on the motor shaft. This value must
 be updated every time the winding angle is changed or the position of the carriages limit switches are moved.
 
+## For Winding Angles > 65 Degrees
+Ensure that the space between strands of filament between sucessive circuits is the same as that specified in the config file.
+Due to inaccuracies of this open control system, there is a tendency for spacing to be less than that desired (by up to 1/8").
+To compensate for this, repeatedly define the filament width as slightly larger than the actual width in the config file and 
+test until the correct physical width is found.
+
 ## Gotcha's
-- <b>Big Gotcha</b>
 - Ensure the mandrel's radius is used, not the diameter
-- Enter the wind angle and fix the limit switch positions before running the calibration routine to find mandrel_steps.
+- Enter the winding angle and fix the limit switch positions before running the calibration routine to find mandrel_steps.
   Remember to re-upload the code to the arduino with this updated value before doing a wind.
