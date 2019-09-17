@@ -25,46 +25,33 @@ int main_()
                 toward C_Home_Switch.
   
   Initialization sub-routine to bring carriage to home position resting against 
-  C_Home_Switch and mandrel to default intialized step_count_at_start_of_pass
-  position.
+  C_Home_Switch and rotator to 0deg default position.
   ---------------------------------------------------------------------------*/
 
-  // Current prognosis of system is that it seems everything is working functionally, except either
-  // a calculation of the dwell steps or something of the like is either fundamentally wrong,
-  // or wrong in implementation (possible rounding error). It seems that somethims multiple patterns
-  // per circuit is not respected but instead it acts as one pattern per circuit, also the machine
-  // either advances too much between passes or not at all. This has not always been the case, the
-  // system has worked more or less with this equation prior giving (more) accurate distances
-  // between strands therefore assume error in implementation of some part of initial setup algo.
-
-  // /* Home Rotator - Guarantees Rotator initially in the 0deg position */
-  // Rotator.set_rev_per_sec(config::r_homing_rev_per_sec);
-  // bool rotator_switch_pressed = false;
-  // while (Rotator.get_step_count() < config::r_steps_to_home || !rotator_switch_pressed)
-  // {
-  //   if (Rotator_Switch.is_rising_edge())
-  //   {
-  //     Rotator.flip_dir();
-  //     Rotator.clear_step_count();
-  //     rotator_switch_pressed = true;
-  //   }
-  //   long_int_type curr_usec = micros();
-  //   if (curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
-  //   {
-  //     Rotator.set_last_step_time(curr_usec);
-  //     Rotator.step();
-  //     Rotator.inc_step_count();
-  //   }
-  // }
-  // Rotator.clear_step_count();
-  // Rotator.flip_dir();
+  /* Home Rotator - Ensures Rotator initially in the 0deg position */
+  Rotator.set_rev_per_sec(config::r_homing_rev_per_sec);
+  bool rotator_switch_pressed = false;
+  while (Rotator.get_step_count() < config::r_steps_to_home || !rotator_switch_pressed)
+  {
+    if (Rotator_Switch.is_rising_edge())
+    {
+      Rotator.flip_dir();
+      Rotator.clear_step_count();
+      rotator_switch_pressed = true;
+    }
+    long_int_type curr_usec = micros();
+    if (curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
+    {
+      Rotator.set_last_step_time(curr_usec);
+      Rotator.step();
+      Rotator.inc_step_count();
+    }
+  }
+  Rotator.clear_step_count();
+  Rotator.flip_dir();
 
   // Private scope so helper variables are cleared off stack before control algo
   {
-    Serial.print("circuits_per_layer: ");
-    Serial.print(config::circuits_per_layer);
-    Serial.print("\n");
-
     const double c_accel_dist = (39.375 / config::deg_wrap_angle) - 0.3125; // linear eq. between [30deg -> 1in, 90deg -> 0.125in]
     const int_type c_accel_steps = (c_accel_dist * config::steps_per_rev) / (config::c_pulley_pitch * config::c_num_pulley_teeth);
     Carriage.set_total_accel_steps(c_accel_steps);
@@ -95,49 +82,20 @@ int main_()
 
     Mandrel.set_velocity(m_velocity);
     Carriage.set_init_usec_per_step_accel(c_accel_dist, c_velocity);
+    Rotator.set_rev_per_sec(c_accel_dist, c_velocity);
 
-    // Calculate all possible offset steps given patterns per circuit
-    double offset_steps[config::patterns_per_circuit];
-    int_type dwell_steps[config::patterns_per_circuit];
-    int_type min_viable_dwell_steps = config::m_steps_per_rev;
-    for (int_type m = 0; m < config::patterns_per_circuit; ++m)
-    {
-      offset_steps[m] = (config::m_steps_per_rev * (m + (1.0 / config::circuits_per_layer))) / config::patterns_per_circuit;
-      int_type i = (2 * config::mandrel_steps) / (config::m_steps_per_rev + int_type(offset_steps[m]));
-      ++i;
-      dwell_steps[m] = (((i * config::m_steps_per_rev) + int_type(offset_steps[m])) - (2 * config::mandrel_steps)) / 2;
-      if (dwell_steps[m] >= config::min_dwell_steps && dwell_steps[m] < min_viable_dwell_steps)
-      {
-        min_viable_dwell_steps = dwell_steps[m];
-      }
-      // Serial.print("For m = ");
-      // Serial.print(m);
-      // Serial.print(" offset steps = ");
-      // Serial.print(offset_steps[m]);
-      // Serial.print("\n");
-      // Serial.print("For m = ");
-      // Serial.print(m);
-      // Serial.print(" dwell_steps = ");
-      // Serial.print(dwell_steps[m]);
-      // Serial.print("\n");
-    }
-
-    Serial.print("min_viable_dwell_steps = ");
-    Serial.print(min_viable_dwell_steps);
-    Serial.print("\n");
-
-    if (min_viable_dwell_steps == config::m_steps_per_rev)
-    {
-      // Then there are no viable solutions for the given configuration
-    }
-
-    Mandrel.set_dwell_steps(min_viable_dwell_steps);
+    // Find dwell steps for specified patterns per circuit
+    int_type offset_steps = (config::m_steps_per_rev * ((config::patterns_per_circuit - 1) + (1.0 / config::circuits_per_layer))) / config::patterns_per_circuit;
+    int_type i = (2 * config::mandrel_steps) / (config::m_steps_per_rev + offset_steps);
+    ++i;
+    int_type dwell_steps = (((i * config::m_steps_per_rev) + offset_steps) - (2 * config::mandrel_steps)) / 2;
+    Mandrel.set_dwell_steps(dwell_steps);
   }
 
-  // Set beginning of stoke Mandrel step count for all circuits
+  // Initialize step count at start of each pattern on first circuit
   int_type start_of_pattern_step_count[config::patterns_per_circuit];
   start_of_pattern_step_count[0] = 0;
-  for (int i = 1; i < config::patterns_per_circuit; ++i)
+  for (int_type i = 1; i < config::patterns_per_circuit; ++i)
   {
     start_of_pattern_step_count[i] = (start_of_pattern_step_count[i - 1] + (2 * config::mandrel_steps) + (2 * Mandrel.get_dwell_steps())) % config::m_steps_per_rev;
   }
@@ -168,14 +126,13 @@ int main_()
                                <3 Axis Filament Wind>
   Main routine which performs a 3 axis filament wind at users specifications defined
   in include/Config.h under CALIBRATIONS FOR USER. Given a user defined wrap angle,
-  the carriage and mandrel actuate at a predetermined constant velocity while the
-  applicator head rotates as necessary such that the filament is applied parallel
-  to the mandrel during a wind.
+  the carriage and mandrel move at a constant velocity while the applicator head
+  rotates as necessary to apply the filament parallel to the mandrel during winding.
   ---------------------------------------------------------------------------*/
 
   int_type strokes = 0;
   int_type layers = 0;
-  int_type m_step_count = 0;
+  int_type m_step_count = 0; // For calibration
   int_type curr_pattern = 0;
 
   while (layers < config::total_layers)
@@ -224,6 +181,7 @@ int main_()
           Carriage.check_decel_finished();
           if (!Carriage.is_decelerating())
           {
+            // Uncomment for pre-wind calibration
             Serial.print("For Calibration - Total Mandrel Steps: ");
             Serial.print(m_step_count % config::m_steps_per_rev);
             Serial.print("\n");
@@ -234,14 +192,14 @@ int main_()
       }
     }
 
-    // curr_usec = micros();
-    // if (Rotator.is_enabled() && curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
-    // {
-    //   Rotator.set_last_step_time(curr_usec);
-    //   Rotator.step();
-    //   Rotator.inc_step_count();
-    //   Rotator.check_rotation_finished();
-    // }
+    curr_usec = micros();
+    if (Rotator.is_enabled() && curr_usec - Rotator.get_last_step_time() > Rotator.get_usec_per_step())
+    {
+      Rotator.set_last_step_time(curr_usec);
+      Rotator.step();
+      Rotator.inc_step_count();
+      Rotator.check_rotation_finished();
+    }
 
     if (C_Home_Switch.is_rising_edge() || C_Far_Switch.is_rising_edge())
     {
@@ -258,34 +216,22 @@ int main_()
       Carriage.flip_dir();
       Carriage.set_dwell_flag();
 
-      for (int i = 0; i < config::patterns_per_circuit; ++i)
-      {
-        Serial.print("start of pattern at ");
-        Serial.print(i);
-        Serial.print(" is ");
-        Serial.print(start_of_pattern_step_count[i]);
-        Serial.print("\n");
-      }
-
-      start_of_pattern_step_count[curr_pattern] = (start_of_pattern_step_count[curr_pattern] + config::mandrel_steps + Mandrel.get_dwell_steps()) % config::m_steps_per_rev;
-
       ++strokes;
-      if (strokes % 2 == 0)
+      if (strokes % 2 == 0 && config::patterns_per_circuit > 1)
       {
-        ++curr_pattern;
-        if (curr_pattern == config::patterns_per_circuit)
-        {
-          curr_pattern = 0;
-        }
+        int_type prev_pattern = (curr_pattern + config::patterns_per_circuit - 1) % config::patterns_per_circuit;
+        start_of_pattern_step_count[curr_pattern] = (start_of_pattern_step_count[prev_pattern] + (2 * config::mandrel_steps) + (2 * Mandrel.get_dwell_steps())) % config::m_steps_per_rev;
+        curr_pattern = (curr_pattern + 1) % config::patterns_per_circuit;
+      }
+      else
+      {
+        start_of_pattern_step_count[curr_pattern] = (start_of_pattern_step_count[curr_pattern] + config::mandrel_steps + Mandrel.get_dwell_steps()) % config::m_steps_per_rev;
       }
     }
 
     if (M_Encoder_Switch.is_rising_edge())
     {
-      Serial.print("Mandrel step count at rising edge: ");
-      Serial.print(Mandrel.get_step_count());
-      Serial.print("\n");
-      // Button not being properly debounced currently
+      // Currently the capacitor in the debounce circuit for M_Encoder_Switch has too low of capacitance to debounce switch properly
       if (Mandrel.get_step_count() > (config::m_steps_per_rev / 2))
       {
         Mandrel.clear_step_count();
