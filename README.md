@@ -5,11 +5,11 @@ A collection of code used to control the UVic Rocketry's Filament Winding Machin
 
 ## Getting Started
 Prior to winding:
-1. A suitable board must be chosen as the controller
-2. The software development environment must be setup on the operators computer
-3. The high and low voltage systems must be wired correctly on the winder
+1. A suitable microcontroller must be chosen
+2. The filament winders low and high voltage systems must be wired correctly
+3. A development environment must be setup on the machines operator's computer
 
-### Controller Selection
+### Microcontroller Selection
 Any board which Arduino complies for and meets the following requirements can be used:
 1. At least 8MHz clock speed
 2. At least 13 digital I/O pins
@@ -17,6 +17,25 @@ Any board which Arduino complies for and meets the following requirements can be
 An Arudino Mega 2560 has worked previously. 
 
 ### Wiring
+The filament winder contains both high and low voltage systems. Please refer to the [electrical architecture](https://github.com/isaaccormack/fw_controls/blob/master/docs/elec_diagrams/fw_electrical_architecture.png) diagram for the following discussion. Below we discuss .. (wiring, components, 
+
+The high voltage system consists of the power supply, stepper motors, and high voltage end-points on the stepper drivers. These are the devices connected by red lines in the architecture diagram. Consult the [stepper driver](https://github.com/isaaccormack/fw_controls/blob/master/docs/elec_diagrams/TB6600_driver_wiring_schematic.png) wiring diagram for wiring specifics. The high voltage system should be enabled/disabled via a breaker switch between the power supply and the AC wall outlet.
+
+For troubleshooting electrical connections, it is recommended to check the stepper driver and power supply terminals first, as these can come lose, then soldered connections.
+
+The low voltage system consists of the microcontroller, switch debounce circuits (SDC), switches, and low voltage end-points on the stepper drivers. These are the devices connected by black lines in the architecture diagram. It is worth mentioning here that SDCs must be used with all switches to provide physical debouncing. This solution was chosen over software debouncing to simplify the software. 
+
+The switches aboard the machine 
+
+| Switch | Purpose |
+|--------|----------|
+| M_Encoder_Switch |   |
+|   |   |
+|   |   |
+
+## Electrical Architecture
+
+
 ** note that it is really important to check and double check the wires
 
 ### Development Environment ** change name
