@@ -1,13 +1,18 @@
 Background:
-Due the inherent nature of stepper motors, there exists a natural frequency of rotation
-at which the stepper motor will be unable to rotate as intended and its behaviour
-becomes undefined. In some cases, loading the motor will mitigate this behaviour, but 
-in the case of mandrel stepper motor of the filament winding machine, it is unavoidable.
-At some wrap angles it is possible that the mandrel stepper will reach this natural frequency.
-A simple indicator of when the mandrel stepper speed is nearing its natural frequncy is that
-the stepper motor will vibrate more, and operation of the machine will become audibly louder.
-To allow for sinding wrap angles close to or on the natural frequency, the speed of the carriage,
-config::carriage_velocity, must be changed, as the mandrel speed is directly dependent on this.
+Due the inherent nature of stepper motors, there exists a resonant frequency of rotation
+at which the stepper motor will become unable to rotate due to resonance within the motor.
+All stepper motors on the machine, less the mandrel motor, opperate outside of their resonant
+frequency. It is sometimes possible to mitigate the resonance by loading the motor, but in the
+case of the mandrel motor, this resonance is unavoidable.
+
+As a result, at some wrap angles, the mandrel motor with hit its resonant frequency and become
+unable to operate. A simple indicator of when the mandrel stepper speed is nearing its resonant
+frequncy is that the stepper motor will vibrate more, and operation of the machine will become
+audibly louder.
+To allow for the winding of wrap angles close to or on the resonant frequency, the speed of the
+carriage, config::carriage_velocity, must be changed, as to change the speed of the mandrel 
+motor and avoid the resonant frequency. This is the case as the mandrel speed is directly
+dependent on the carriage speed. As the carriage speed is ... something about constexpr
 
 Procedure:
 The equation which sets the carriage velocity is currently: (located in Config.h)
