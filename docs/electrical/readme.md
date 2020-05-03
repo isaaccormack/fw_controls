@@ -12,31 +12,26 @@ As seen below, the high voltage system is connected by red lines and the low vol
 - [Low Voltage System](#low-voltage-system)
 
 ## High Voltage System
-The high voltage system is the electrical powertrain for the machine. It consists of the power supply, stepper motors, and stepper motor drivers (drivers for short).
+The high voltage system is the electrical powertrain for the machine. It consists of the power supply, stepper motors, and stepper motor drivers (motors and drivers for short).
 
 ### Stepper Motors
-Stepper motors were chosen for this application due to their high torque-to-size ratio, high positional precision, and ease of control via software. On board the filament winder there are four motors. All but the mandrel motor were chosen to be NEMA 23 stepper motors from [Phidgets](https://www.phidgets.com/), the specs of which are shown below. ![Gearless NEMA 23 Stepper Motor from Phidgets](https://github.com/isaaccormack/fw_controls/blob/master/docs/datasheets/NEMA_23_carriage_motor_specs.png)
+Stepper motors were chosen for this application due to their high torque-to-size ratio, high positional precision, and ease of software control. On board the filament winder there are four motors. All but the mandrel motor were chosen to be gearless NEMA 23 stepper motors from [Phidgets](https://www.phidgets.com/), the specs of which are shown below. ![Gearless NEMA 23 Stepper Motor](https://github.com/isaaccormack/fw_controls/blob/master/docs/datasheets/NEMA_23_carriage_motor_specs.png)
 
-<talk about specifics to the gearless motors here, ie. how they are suitable for their applications, bring up the specific for each one, talk about gear ratios and precision requirements and the torque of the motor to verify decision>
+The three gearless motors are the following:
+1. Carrige motor - pulls the carriage along the linear bearings from end-to-end
+2. Radial motor - pulls the applicator head aboard the carriage along linear rails toward and away from the mandrel
+3. Rotator motor - spins the applicator head to apply filament to the mandrel at varying angles
 
-<then talk about the mandrel motor specs and why mandrel motor was used with diagram>
+When selecting the stepper motors it was important to ensure the motor had enough precision and torque for the application. At 200 steps/rev paired with a small pulley gear, the motors easily achieved enough precision. While all three motors have nearly the same torque requirements, the carriage motor must have the highest torque due to its load. This motor was used as a benchmark. Some _rough_ mechanical calculations were done along with simple testing to ensure the gearless NEMA 23 motor would provide enough torque at operational speeds for the carriage motor. It should be noted that although the holding torque for this motor is very high, its torque decreases with speed so it is important to have a well defined operational speed to ensure adequate torque.
 
-<finally talk about how using all the same motors with drivers enables simple control, replacement of parts and whatever else>
+For uniformity in software control, among other things, ideally all four motors aboard the machine would be the same; however, this is not possible as the mandrel motor has much higher torque requirements. Thus, for the mandrel motor a geared NEMA 23 stepper motor with 4.25:1 ratio was used, the specs seen below. ![Geared NEMA 23 Stepper Motor](https://github.com/isaaccormack/fw_controls/blob/master/docs/datasheets/geared_NEMA_23_mandrel_motor_specs.png)
 
+As the motor is geared down at a 4.25:1 ratio, it can output a much higher torque but also because of this, the motor has 857 steps / rev (compared to 200 steps / rev of the gearless) and a max RPM of 375. This must be acounted for when being controlled.
 
+Although the mandrel motor is geared, it has many of the same specs as the gearless motor. Most importantly, it is also a 12v motor and pulls at most 2.8A. This means a 12v driver for motors of 1 - 3A could be chosen to drive all the motors, enabling a uniform interface for control. This greatly simplifies the software as all motors can inherit from a base `Motor.h` class which performs fundamental motor control.
 
-Using the same motors for three applications enables the same driver :
-1. Uniform control
-2. Uniform drivers
-
-On board the filament winder there are four motors. All but the mandrel motor were chosen to be NEMA For this machine, using motors which all use the same voltage was desirable.
-The limiting factor on the stepper motors is their torque. For the mechanical application of the gearless motors (pulling loads along linear bearings), these motors were adequate. This was determined through some _rough_ mechanical calculations and simple testing. It should be noted that the faster the motors are spun, the less torque they offer (on an inverse? logarithmic curve), so specing the motors for the gear ratios and operational speeds of the machine is important. Of course the gear ratios also play into the precision which can be achieved from the machine, but pairing the stepper motors 200 step / rev resolution with near 1:1 gear ratios (for instance 
-
-high positional control for the carriages was acheived by using a small gear, this worked because there wasn't much load on the motor since linear bearings
-
-before handwhich determine how fast
-
-This section will discuss only the electrical aspects of the stepper motors, consult the software readme for detail on their control. 
+### Stepper Motor Drivers
+The TB6600 stepper motor driver was chosen as it supports 12v motors of 1 - 3A, meaning it could be used to drive all motors. The specs are shown below. ![TB6600 Stepper Driver]()
 
 ### Power Supply
 A 12v-30A, or 360W power supply is used. The full specs are shown below.
@@ -45,7 +40,5 @@ A 12v-30A, or 360W power supply is used. The full specs are shown below.
 As each stepper motor is 12v, and all together they pull ~10A. There are only 3 output ports on the supply, so typically the two stepper mottors on the carraige are wired out of one port. 
 
 There _must_ exist a kill switch between the power supply and the wall outlet as a means to disable power to the high voltage system. This is useful for regular operation and necessary for emergencies.
-
-### Stepper Motor Drivers
 
 ## Low Voltage System
