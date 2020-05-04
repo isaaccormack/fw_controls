@@ -2,7 +2,7 @@
 The electronics on board the filament winder can be most easily discussed when divided into high and low voltage systems.
 
 As seen below, the high voltage system is connected by red lines and the low voltage by black lines.<br>
-![Electrical Architectural Diagram](https://github.com/isaaccormack/fw_controls/blob/master/docs/electrical/schematics/fw_electrical_architecture.png?raw=true)<br>
+![Electrical Architectural Diagram](https://github.com/isaaccormack/fw_controls/blob/master/docs/electrical/schematics/electrical_architecture.png?raw=true)<br>
 
 # Table of Contents
   * [Low Voltage System](#low-voltage-system)
