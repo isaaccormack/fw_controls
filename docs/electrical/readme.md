@@ -41,33 +41,33 @@ The M_Encoder_Switch is a miscellaneous roller limit switch. This is necessary a
 The purpose of each switch, action taken by control system when depressed, and mechanical configuration for each switch on board the machine is listed below.
 
 #### C_Far_Switch
-__Purpose__ - Detect when the carriage has reached its furthest winding position.
-__Action__ - The carriage begins decelerating as to change direction.
-__Configuration__ - The placement of the switch determines the length of the wind relative to C_Home_Switch. The carriage will reach a stop 0.25 - 1in after the switch is depressed, due to deceleration, depending on how steep or shallow (respectively) the wrap angle is. The switch must be depressed just enough for it to _click_ upon contact with the linear bearing.
+_Purpose_ - Detect when the carriage has reached its furthest winding position.<br>
+_Action_ - The carriage begins decelerating as to change direction.<br>
+_Configuration_ - The placement of the switch determines the length of the wind relative to C_Home_Switch. The carriage will reach a stop 0.25 - 1in after the switch is depressed, due to deceleration, depending on how steep or shallow (respectively) the wrap angle is. The switch must be depressed just enough for it to _click_ upon contact with the linear bearing.
 
 #### C_Home_Switch
-__Purpose__ - Detect when the carriage has reached its home position.
-__Action__ - The carriage begins decelerating. If the wind is over, the carriage will stop, else it will change direction and begin the next pass.
-__Configuration__ - The position of this switch determines roughly where the wind will begin as the carriage accelerates for 0.25 - 1in (again, depending on wrap angle) before the switch is released. The switch must be depressed just enough for it to _click_ upon contact with the linear bearing.
+_Purpose_ - Detect when the carriage has reached its home position.<br>
+_Action_ - The carriage begins decelerating. If the wind is over, the carriage will stop, else it will change direction and begin the next pass.<br>
+_Configuration_ - The position of this switch determines roughly where the wind will begin as the carriage accelerates for 0.25 - 1in (again, depending on wrap angle) before the switch is released. The switch must be depressed just enough for it to _click_ upon contact with the linear bearing.
 
 #### M_Encoder_Switch
-__Purpose__ - Detect the mandrel has completed a single rotation.
-__Action__ - Signal to the microcontroller. This signal is used to calibrate the actual position of the mandrel to the position the control system calculates the mandrel to be in, like a cheap linear encoder.
-__Configuration__ - It is _crucial_ the switch is mounted securely to the plate with no play and that it stays in the same position between each revolution, for the entire duration of the wind. The key of the mandrel's drive-shaft should depress the switch just enough for it to _click_ upon contact.
+_Purpose_ - Detect the mandrel has completed a single rotation.<br>
+_Action_ - Signal to the microcontroller. This signal is used to calibrate the actual position of the mandrel to the position the control system calculates the mandrel to be in, like a cheap linear encoder.<br>
+_Configuration_ - It is _crucial_ the switch is mounted securely to the plate with no play and that it stays in the same position between each revolution, for the entire duration of the wind. The key of the mandrel's drive-shaft should depress the switch just enough for it to _click_ upon contact.
 
 #### Radial_Far_Switch
 _This switch is used in 4-axis control and therefore its action and configuration are not currently defined, however, suggestions for how to handle these cases are given below._
 
-__Purpose__ - Detect the applicator head has reached its closest position to the mandrel drive shaft. This occurs when the carriage is at either end of the mandrel and the applicator head moves toward the mandrel drive shaft to wrap the filament around the end cap.
-__Action__ - It is likely the applicator head would begin decelerating as to come to a stop or change direction.
-__Configuration__ - It is likely the switch would be positioned 0.5in from where the applicator head should come to a stop, to allow for deceleration. The stop position would likely be where the end of the applicator head is 0.5in -- or as close as possible -- to the mandrel drive shaft.
+_Purpose_ - Detect the applicator head has reached its closest position to the mandrel drive shaft. This occurs when the carriage is at either end of the mandrel and the applicator head moves toward the mandrel drive shaft to wrap the filament around the end cap.<br>
+_Action_ - It is likely the applicator head would begin decelerating as to come to a stop or change direction.<br>
+_Configuration_ - It is likely the switch would be positioned 0.5in from where the applicator head should come to a stop, to allow for deceleration. The stop position would likely be where the end of the applicator head is 0.5in -- or as close as possible -- to the mandrel drive shaft.
 
 #### Radial_Home_Switch
 _This switch is used in 4-axis control and therefore its action and configuration are not currently defined, however, suggestions for how to handle these cases are given below._
 
-__Purpose__ - Detect the applicator head has reached its furthest position away from the mandrel. This occurs when the applicator head has completed winding the end cap and moves away from the mandrel drive shaft to wind the mid-section of the mandrel.
-__Action__ - It is likely the applicator head would being decelerating as to come to a stop.
-__Configuration__ - It is likely the switch would be positioned 0.5in from where the applicator head should come to a stop to allow for deceleration. The stop position would likely be where the end of the applicator head is 0.5in -- or as close as possible -- to the mid-section of the mandrel.
+_Purpose_ - Detect the applicator head has reached its furthest position away from the mandrel. This occurs when the applicator head has completed winding the end cap and moves away from the mandrel drive shaft to wind the mid-section of the mandrel.<br>
+_Action_ - It is likely the applicator head would being decelerating as to come to a stop.<br>
+_Configuration_ - It is likely the switch would be positioned 0.5in from where the applicator head should come to a stop to allow for deceleration. The stop position would likely be where the end of the applicator head is 0.5in -- or as close as possible -- to the mid-section of the mandrel.
 
 #### Rotator_Switch
 This switch is only used to calibrate the machine before a wind. During start-up, the applicator head simply rotates until the switch is depressed, then rotates in the opposite direction `config::r_steps_to_home` steps until the applicator head is positioned vertically -- its home position. 
@@ -102,7 +102,7 @@ The _mandrel motor_ is used to rotate the mandrel at a constant velocity during 
 
 ### Stepper Motor Drivers
 The TB6600 stepper motor driver was chosen as it supports 12V motors of 1 - 3A, meaning it could be used to drive all motors. The specs are shown below. ![TB6600 Stepper Driver Specs](https://github.com/isaaccormack/fw_controls/blob/master/docs/datasheets/TB6600_stepper_driver_specs.png?raw=true)
-See the wiring diagram in the low voltage stepper motor driver [section](#low-voltage/stepper-motor-drivers) for the following discussion. The high voltage interfaces to the driver include 12V and GND wires to the power supply and the four coloured wires to the stepper motor. The stepper motor must be wired to the ports of the driver in the order depicted.
+See the wiring diagram in the low voltage stepper motor driver [section](#stepper-motor-drivers) for the following discussion. The high voltage interfaces to the driver include 12V and GND wires to the power supply and the four coloured wires to the stepper motor. The stepper motor must be wired to the ports of the driver in the order depicted.
 
 ### Power Supply
 A 12V-30A, or 360W power supply is used since all stepper motors are 12V, and pull ~10A together. The specs are shown below.
