@@ -41,33 +41,33 @@ The M_Encoder_Switch is a miscellaneous roller limit switch. This is necessary a
 The purpose of each switch, action taken by control system when depressed, and mechanical configuration for each switch on board the machine is listed below.
 
 #### C_Far_Switch
-_Purpose_ - Detect when the carriage has reached its furthest winding position.<br>
-_Action_ - The carriage begins decelerating as to change direction.<br>
-_Configuration_ - The placement of the switch determines the length of the wind relative to C_Home_Switch. The carriage will reach a stop 0.25 - 1in after the switch is depressed, due to deceleration, depending on how steep or shallow (respectively) the wrap angle is. The switch must be depressed just enough for it to _click_ upon contact with the linear bearing.
+- _Purpose_ - Detect when the carriage has reached its furthest winding position.<br>
+- _Action_ - The carriage begins decelerating as to change direction.<br>
+- _Configuration_ - The placement of the switch determines the length of the wind relative to C_Home_Switch. The carriage will reach a stop 0.25 - 1in after the switch is depressed, due to deceleration, depending on how steep or shallow (respectively) the wrap angle is. The switch must be depressed just enough for it to _click_ upon contact with the linear bearing.
 
 #### C_Home_Switch
-_Purpose_ - Detect when the carriage has reached its home position.<br>
-_Action_ - The carriage begins decelerating. If the wind is over, the carriage will stop, else it will change direction and begin the next pass.<br>
-_Configuration_ - The position of this switch determines roughly where the wind will begin as the carriage accelerates for 0.25 - 1in (again, depending on wrap angle) before the switch is released. The switch must be depressed just enough for it to _click_ upon contact with the linear bearing.
+- _Purpose_ - Detect when the carriage has reached its home position.<br>
+- _Action_ - The carriage begins decelerating. If the wind is over, the carriage will stop, else it will change direction and begin the next pass.<br>
+- _Configuration_ - The position of this switch determines roughly where the wind will begin as the carriage accelerates for 0.25 - 1in (again, depending on wrap angle) before the switch is released. The switch must be depressed just enough for it to _click_ upon contact with the linear bearing.
 
 #### M_Encoder_Switch
-_Purpose_ - Detect the mandrel has completed a single rotation.<br>
-_Action_ - Signal to the microcontroller. This signal is used to calibrate the actual position of the mandrel to the position the control system calculates the mandrel to be in, like a cheap linear encoder.<br>
-_Configuration_ - It is _crucial_ the switch is mounted securely to the plate with no play and that it stays in the same position between each revolution, for the entire duration of the wind. The key of the mandrel's drive-shaft should depress the switch just enough for it to _click_ upon contact.
+- _Purpose_ - Detect the mandrel has completed a single rotation.<br>
+- _Action_ - Signal to the microcontroller. This signal is used to calibrate the actual position of the mandrel to the position the control system calculates the mandrel to be in, like a cheap linear encoder.<br>
+- _Configuration_ - It is _crucial_ the switch is mounted securely to the plate with no play and that it stays in the same position between each revolution, for the entire duration of the wind. The key of the mandrel's drive-shaft should depress the switch just enough for it to _click_ upon contact.
 
 #### Radial_Far_Switch
 _This switch is used in 4-axis control and therefore its action and configuration are not currently defined, however, suggestions for how to handle these cases are given below._
 
-_Purpose_ - Detect the applicator head has reached its closest position to the mandrel drive shaft. This occurs when the carriage is at either end of the mandrel and the applicator head moves toward the mandrel drive shaft to wrap the filament around the end cap.<br>
-_Action_ - It is likely the applicator head would begin decelerating as to come to a stop or change direction.<br>
-_Configuration_ - It is likely the switch would be positioned 0.5in from where the applicator head should come to a stop, to allow for deceleration. The stop position would likely be where the end of the applicator head is 0.5in -- or as close as possible -- to the mandrel drive shaft.
+- _Purpose_ - Detect the applicator head has reached its closest position to the mandrel drive shaft. This occurs when the carriage is at either end of the mandrel and the applicator head moves toward the mandrel drive shaft to wrap the filament around the end cap.<br>
+- _Action_ - It is likely the applicator head would begin decelerating as to come to a stop or change direction.<br>
+- _Configuration_ - It is likely the switch would be positioned 0.5in from where the applicator head should come to a stop, to allow for deceleration. The stop position would likely be where the end of the applicator head is 0.5in -- or as close as possible -- to the mandrel drive shaft.
 
 #### Radial_Home_Switch
 _This switch is used in 4-axis control and therefore its action and configuration are not currently defined, however, suggestions for how to handle these cases are given below._
 
-_Purpose_ - Detect the applicator head has reached its furthest position away from the mandrel. This occurs when the applicator head has completed winding the end cap and moves away from the mandrel drive shaft to wind the mid-section of the mandrel.<br>
-_Action_ - It is likely the applicator head would being decelerating as to come to a stop.<br>
-_Configuration_ - It is likely the switch would be positioned 0.5in from where the applicator head should come to a stop to allow for deceleration. The stop position would likely be where the end of the applicator head is 0.5in -- or as close as possible -- to the mid-section of the mandrel.
+- _Purpose_ - Detect the applicator head has reached its furthest position away from the mandrel. This occurs when the applicator head has completed winding the end cap and moves away from the mandrel drive shaft to wind the mid-section of the mandrel.<br>
+- _Action_ - It is likely the applicator head would being decelerating as to come to a stop.<br>
+- _Configuration_ - It is likely the switch would be positioned 0.5in from where the applicator head should come to a stop to allow for deceleration. The stop position would likely be where the end of the applicator head is 0.5in -- or as close as possible -- to the mid-section of the mandrel.
 
 #### Rotator_Switch
 This switch is only used to calibrate the machine before a wind. During start-up, the applicator head simply rotates until the switch is depressed, then rotates in the opposite direction `config::r_steps_to_home` steps until the applicator head is positioned vertically -- its home position. 
