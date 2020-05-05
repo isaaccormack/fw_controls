@@ -1,4 +1,5 @@
 #include "include/Carriage.h"
+#include "include/Config.h"
 #include "include/Mandrel.h"
 #include "include/Rotator.h"
 #include "include/Switch.h"

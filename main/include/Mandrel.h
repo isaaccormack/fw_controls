@@ -1,7 +1,6 @@
 #ifndef MANDREL_H
 #define MANDREL_H
 
-#include "Config.h"
 #include "Motor.h"
 
 class Mandrel : public Motor

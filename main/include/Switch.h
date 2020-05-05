@@ -2,13 +2,12 @@
 #define SWITCH_H
 
 #include "Config.h"
-#include "Motor.h"
 
 /* Precondition: Switch is wired normally open
 
-   Switches are physically debounced with a simple RC circuit. The schematic for this circuit
-   can be seen in /docs/debounced_pulldown_switch_schematic.png. The values in the diagram are
-   configured for a breadboard layout. */
+  Switches are physically debounced with a simple RC circuit seen in 
+  docs/electrical/schematics/debounced_pulldown_switch_schematic.png.
+*/
 class Switch
 {
 public:

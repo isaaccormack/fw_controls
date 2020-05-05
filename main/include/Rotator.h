@@ -1,7 +1,6 @@
 #ifndef ROTATOR_H
 #define ROTATOR_H
 
-#include "Config.h"
 #include "Motor.h"
 
 class Rotator : public Motor

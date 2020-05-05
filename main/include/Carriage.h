@@ -1,7 +1,6 @@
 #ifndef CARRIAGE_H
 #define CARRIAGE_H
 
-#include "Config.h"
 #include "Motor.h"
 
 class Carriage : public Motor
