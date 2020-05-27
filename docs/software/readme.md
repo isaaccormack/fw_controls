@@ -1,7 +1,3 @@
-# Controls
-
-## Table of Contents
-
 - [Per-Wind Calibration](#per-wind-calibration)
 - [Pre-Wind](#pre-wind)
   * [Initialize Carriage and Mandrel Class States](#initialize-carriage-and-mandrel-class-states)
@@ -15,7 +11,6 @@
 - [Winding Algorithm](#winding-algorithm)
   * [Velocity Control](#velocity-control)
   * [Acceleration Control](#acceleration-control)
-
 
 The strutcure of this doc parallels the execution in which the code is written for ease of understanding.
 
@@ -84,7 +79,14 @@ The _dwell steps_ account for the mandrels rotation while the carriage makes a p
 Finally, the dwell steps are then saved into the mandrels state by calling `Mandrel.set_dwell_steps(dwell_steps)`.
 
 ## Initialize Start of Pattern Step Count
-The _start of pattern step count_, `start_of_pattern_step_count[]`, holds the mandrel step the mandrel must be at when the carriage leaves the home end to begin a pattern. Each index holds the position for the respective pattern. Using an array of _start of pattern step count_ is simply a way to ensure that each pattern begins from the correct position. This ensures each strand of filament is always positioned the right offset from the one on the circuit below it, necessary for the machines tight tolerances, and that errors don't stack between passes.
+The _start of pattern step count_, `start_of_pattern_step_count[]`, is an array which holds the step count the mandrel must reach before the carriage begins its pass. This ensures that each time the carriage leaves for a pass, it is starting from the correct position. 
+
+Each index maps to a pattern, and because the ps
+
+
+the mandrel must be at for the carriage to begin its next pattern. leave its .. for the 
+
+holds the mandrel step the mandrel must be at when the carriage leaves the home end to begin a pattern. Each index holds the position for the respective pattern. Using an array of _start of pattern step count_ is simply a way to ensure that each pattern begins from the correct position. This ensures each strand of filament is always positioned the right offset from the one on the circuit below it, necessary for the machines tight tolerances, and that errors don't stack between passes.
 
 Say for instance the mandrel skipped a couple steps during a pass. If the carriage simply waited for _dwell steps_ at the end of the pass before doing the next, the error would propogate for the remainder of the wind leaving a large gap between where the filament should be and where it is now being layed. By using the array of _start of pattern step count_, the carriage will wait until the mandrel is in the correct position, even if it is more of less time than the actual _dwell steps_ to ensure the above case does not happen. This works as the mandrel step count stored in _start of pattern step count_ is calculated using dwell steps.. put this here or below?
 
@@ -125,6 +127,21 @@ It may be confusing that `Carriage.set_velocity(config::c_homing_velocity)` is c
 The mechanics of how the carriage is controlled at constant velocity and via acceleration are discussed in classes.md/Carriage. -- change this
 
 # Winding Algorithm
+The 3-axis winding algorithm is relatively simple once initializtion is complete. During a wind, the mandrel rotates at a constant velocity while the carriage moves from end to end, and the rotator head pivots to apply filament to the mandrel. This continues until the mandrel has been wrapped with the desired layers of filament, `config::total_layers`.
+
+
+
+The software works by polling for events, then taking the actions 
+
+## Mandrel Control
+
+## Carriage Control
+
+
+
+To give an overview, th
+
+
 here we are going to talk about how the carriage is controlled with accel / decel, referencing http://annals.fih.upt.ro/pdf-full/2013/ANNALS-2013-3-06.pdf.
 
 First we must discuss the most basic mechanics of how the motors are controlled.
