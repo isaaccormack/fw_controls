@@ -1,7 +1,9 @@
 # fw_controls
 A collection of code used to control the UVic Rocketry's Filament Winding Machine.
 
-[![filament winder video](http://img.youtube.com/vi/ra9vlA5Vj_g/0.jpg)](http://www.youtube.com/watch?v=ra9vlA5Vj_g "Filament Winder Montage")
+## Winding Video
+[![filament winder video](http://img.youtube.com/vi/ra9vlA5Vj_g/0.jpg)](http://www.youtube.com/watch?v=ra9vlA5Vj_g "Filament Winder Montage") <br/>
+A short montage showcasing the machine, filament winds produced, and some trial runs with various winding patterns.
 
 ## Getting Started
 Prior to winding:
